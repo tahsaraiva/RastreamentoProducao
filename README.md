@@ -1,59 +1,146 @@
-# Rastreamento
+#Rastreamento de Produção por Lote
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.5.
+Sistema de rastreamento de produção por lote desenvolvido com **Angular 17** (standalone components, signals) e **Tailwind CSS 3**.
 
-## Development server
+---
 
-To start a local development server, run:
+## 🚀 Setup rápido
 
-```bash
-ng serve
-```
+### Pré-requisitos
+- Node.js 18+ / 20+
+- npm 9+
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+### Instalação e execução
 
 ```bash
-ng generate component component-name
+# 1. Instalar dependências
+npm install
+
+# 2. Iniciar servidor de desenvolvimento
+npm start
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Acesse: **http://localhost:4200**
 
-```bash
-ng generate --help
+---
+
+## 🔑 Credenciais de demonstração
+
+| E-mail | Senha | Perfil |
+|--------|-------|--------|
+| admin@rastreamento.com | 123456 | Admin |
+| gestor@rastreamento.com | 123456 | Gestor |
+| operador@rastreamento.com | 123456 | Operador |
+
+---
+
+## 📱 Telas disponíveis
+
+| Rota | Tela |
+|------|------|
+| `/login` | Login com formulário reativo |
+| `/app/dashboard` | Dashboard com métricas e últimos lotes |
+| `/app/lotes` | Listagem com filtros e badges de status |
+| `/app/lotes/novo` | Formulário de abertura de lote |
+| `/app/lotes/:id` | Detalhe do lote com insumos e inspeção |
+| `/app/lotes/:id/insumos` | Gerenciamento de insumos do lote |
+| `/app/lotes/:id/inspecao` | Registro de inspeção de qualidade |
+| `/app/rastreabilidade` | Consulta de rastreabilidade (lote e reversa) |
+
+---
+
+## 🔍 Como demonstrar a rastreabilidade
+
+### Rastreio por lote (dado um lote → ver insumos)
+1. Acesse **Rastreabilidade**
+2. Digite: `BT1-20240415-0001`
+3. Ver todos os insumos usados, com lote de origem e fornecedor
+
+### Consulta reversa (dado insumo suspeito → lotes afetados)
+1. Acesse **Rastreabilidade**  
+2. Digite: `INS-IBU-01` (código do insumo)
+3. Sistema lista todos os lotes que usaram aquele insumo — ideal para cenário de **recall**
+
+### Por lote de insumo específico
+1. Digite: `FRN-2024-1103`
+2. Ver todos os lotes que receberam esse lote específico de insumo
+
+---
+
+## 🏗️ Arquitetura
+
+```
+src/app/
+├── core/
+│   ├── guards/          # authGuard, noAuthGuard
+│   ├── interceptors/    # authInterceptor (JWT)
+│   └── services/
+│       ├── auth.service.ts      # Signals: user, isAuth, perfil
+│       └── mock-data.service.ts # Dados de demonstração
+│
+├── shared/
+│   ├── models/          # Interfaces, enums, helpers
+│   └── components/
+│       └── layout/      # Shell com sidebar
+│
+└── features/
+    ├── auth/login/      # Tela 1: Login
+    ├── dashboard/       # Tela 2: Dashboard
+    ├── lotes/
+    │   ├── lote-list/   # Tela 3: Listagem com filtros
+    │   ├── lote-form/   # Tela 3: Formulário de abertura
+    │   └── lote-detail/ # Tela 4: Detalhe do lote
+    ├── insumos/         # Tela 5: Vínculo de insumos
+    ├── inspecao/        # Tela 6: Registro de inspeção
+    └── rastreabilidade/ # Tela 7: Consulta de rastreabilidade
 ```
 
-## Building
+---
 
-To build the project run:
+## ✨ Funcionalidades implementadas
 
-```bash
-ng build
+- ✅ **AuthService com Angular Signals** — `user`, `isAuth`, `perfil`, `token`
+- ✅ **authGuard** e **noAuthGuard** funcionais
+- ✅ **HTTP Interceptor** — injeta Bearer token e trata 401
+- ✅ **Login reativo** com validação em tempo real e toggle de senha
+- ✅ **Número de lote gerado automaticamente** (formato: `BT{N}-YYYYMMDD-NNNN`)
+- ✅ **Dashboard** com 4 métricas + tabela de últimos 10 lotes
+- ✅ **Filtros** por número, produto e status na listagem
+- ✅ **Badges de status** coloridos em todas as telas
+- ✅ **Encerramento de lote** com transição de status automática
+- ✅ **Insumos** — adicionar e remover (somente em produção)
+- ✅ **Inspeção** com validação condicional por resultado
+- ✅ **Rastreabilidade direta** — lote → insumos
+- ✅ **Rastreabilidade reversa** — insumo → lotes afetados
+- ✅ **Lazy loading** em todas as rotas
+- ✅ **Standalone components** (Angular 17)
+- ✅ **Dark theme** industrial com Tailwind CSS
+
+---
+
+## 🎨 Design
+
+- **Tema:** Dark industrial — `slate-950` como base
+- **Cor de marca:** Azul `brand-600` (#4f63f8)
+- **Fontes:** DM Sans (corpo) + Sora (display) + JetBrains Mono (números/códigos)
+- **Badges de status:** Azul / Amarelo / Verde / Laranja / Vermelho
+
+---
+
+## 📦 Próximos passos (backend)
+
+Quando integrar com API real, substituir `MockDataService` pelos services HTTP:
+
+```typescript
+// Exemplo de substituição
+@Injectable({ providedIn: 'root' })
+export class LoteService {
+  constructor(private http: HttpClient) {}
+
+  getLotes(): Observable<Lote[]> {
+    return this.http.get<Lote[]>('/api/lotes');
+  }
+}
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+O `authInterceptor` já injeta automaticamente o Bearer token em todas as requisições.
