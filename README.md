@@ -127,6 +127,7 @@ src/app/
 
 ---
 
+<<<<<<< HEAD
 ## 📦 Próximos passos (backend)
 
 Quando integrar com API real, substituir `MockDataService` pelos services HTTP:
@@ -144,3 +145,8 @@ export class LoteService {
 ```
 
 O `authInterceptor` já injeta automaticamente o Bearer token em todas as requisições.
+=======
+
+O `authInterceptor` já injeta automaticamente o Bearer token em todas as requisições.
+
+>>>>>>> e322b9e039e71910554637445782b40ee1705101
