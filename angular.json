@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "Rastreamento": {
+    "rastreamento": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -46,8 +46,8 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
-            "production": { "buildTarget": "batch-track:build:production" },
-            "development": { "buildTarget": "batch-track:build:development" }
+            "production": { "buildTarget": "rastreamento:build:production" },
+            "development": { "buildTarget": "rastreamento:build:development" }
           },
           "defaultConfiguration": "development"
         }
