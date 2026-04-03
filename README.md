@@ -31,9 +31,9 @@ Acesse: **http://localhost:4200**
 
 | E-mail | Senha | Perfil |
 |--------|-------|--------|
-| admin@batchtrack.com | 123456 | Admin |
-| gestor@batchtrack.com | 123456 | Gestor |
-| operador@batchtrack.com | 123456 | Operador |
+| admin@rastreamento.com | 123456 | Admin |
+| gestor@rastreamento.com | 123456 | Gestor |
+| operador@rastreamento.com | 123456 | Operador |
 
 ---
 
