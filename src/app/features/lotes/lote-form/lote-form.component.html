@@ -1,0 +1,130 @@
+<section class="space-y-6">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <p class="text-sm text-slate-400">Abertura de lote</p>
+      <h1 class="mt-1 text-2xl font-bold text-white">
+        Novo lote de produção
+      </h1>
+    </div>
+
+    <a
+      routerLink="/app/lotes"
+      class="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
+    >
+      Voltar
+    </a>
+  </div>
+
+  @if (loading()) {
+    <div class="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-slate-300">
+      Carregando formulário...
+    </div>
+  }
+
+  @if (error()) {
+    <div class="rounded-2xl border border-red-900 bg-red-950/40 p-4 text-red-300">
+      {{ error() }}
+    </div>
+  }
+
+  <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+    <div class="grid gap-4 md:grid-cols-2">
+      <div>
+        <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
+          Produto
+        </label>
+        <select
+          [ngModel]="form.produtoId"
+          (ngModelChange)="onProdutoChange($event)"
+          [disabled]="loading() || saving()"
+          class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
+        >
+          <option value="">Selecione um produto</option>
+          @for (produto of produtos(); track produto.id) {
+            <option [value]="produto.id">
+              {{ produto.nome }} ({{ produto.codigo }})
+            </option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
+          Data de produção
+        </label>
+        <input
+          [(ngModel)]="form.dataProducao"
+          [disabled]="saving()"
+          type="date"
+          class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
+        />
+      </div>
+
+      <div>
+        <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
+          Turno
+        </label>
+        <select
+          [(ngModel)]="form.turno"
+          [disabled]="saving()"
+          class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
+        >
+          @for (turno of turnoOptions; track turno.value) {
+            <option [value]="turno.value">{{ turno.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
+          Linha
+        </label>
+        <input
+          [(ngModel)]="form.linha"
+          [disabled]="saving()"
+          type="text"
+          class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
+          placeholder="Ex: Linha SMT 01"
+        />
+      </div>
+
+      <div>
+        <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
+          Quantidade produzida
+        </label>
+        <input
+          [(ngModel)]="form.quantidadeProd"
+          [disabled]="saving()"
+          type="number"
+          min="1"
+          class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
+          placeholder="Ex: 350"
+        />
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
+          Observações
+        </label>
+        <textarea
+          [(ngModel)]="form.observacoes"
+          [disabled]="saving()"
+          rows="5"
+          class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
+          placeholder="Informações adicionais sobre o lote"
+        ></textarea>
+      </div>
+    </div>
+
+    <div class="mt-6 flex justify-end">
+      <button
+        type="button"
+        (click)="salvar()"
+        [disabled]="saving() || loading()"
+        class="rounded-xl bg-cyan-500 px-5 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-50"
+      >
+        {{ saving() ? 'Salvando...' : 'Abrir lote' }}
+      </button>
+    </div>
+  </div>
+</section>

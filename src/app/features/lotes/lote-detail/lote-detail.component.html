@@ -1,0 +1,236 @@
+<section class="space-y-6">
+  @if (loading()) {
+    <div class="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-slate-300">
+      Carregando lote...
+    </div>
+  }
+
+  @if (error()) {
+    <div class="rounded-2xl border border-red-900 bg-red-950/40 p-4 text-red-300">
+      {{ error() }}
+    </div>
+  }
+
+  @if (lote(); as loteAtual) {
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <p class="text-sm text-slate-400">Lote de produção</p>
+        <h1 class="mt-1 text-2xl font-bold text-white font-mono">
+          {{ loteAtual.numero }}
+        </h1>
+      </div>
+
+      <div class="flex gap-2">
+        @if (loteAtual.status === 'em_producao') {
+          <button
+            type="button"
+            (click)="encerrarLote()"
+            [disabled]="encerrarLoading()"
+            class="rounded-xl bg-amber-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-300 disabled:opacity-50"
+          >
+            {{ encerrarLoading() ? 'Encerrando...' : 'Encerrar lote' }}
+          </button>
+        }
+
+        @if (loteAtual.status === 'em_producao') {
+          <a
+            [routerLink]="['/app/lotes', loteAtual.id, 'insumos']"
+            class="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
+          >
+            Gerenciar insumos
+          </a>
+        }
+
+        @if (loteAtual.status === 'aguardando_inspecao') {
+          <a
+            [routerLink]="['/app/lotes', loteAtual.id, 'inspecao']"
+            class="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
+          >
+            Registrar inspeção
+          </a>
+        }
+      </div>
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-3">
+      <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5 lg:col-span-2">
+        <h2 class="mb-4 text-lg font-semibold text-white">Dados do lote</h2>
+
+        <dl class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500">Produto</dt>
+            <dd class="mt-1 text-sm text-slate-200">
+              {{ loteAtual.produto?.nome }}
+              <span class="text-slate-500">({{ loteAtual.produto?.codigo }})</span>
+            </dd>
+          </div>
+
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500">Status</dt>
+            <dd class="mt-1">
+              <span
+                class="rounded-full px-2 py-1 text-xs font-medium"
+                [ngClass]="getStatusCss(loteAtual.status)"
+              >
+                {{ getStatusLabel(loteAtual.status) }}
+              </span>
+            </dd>
+          </div>
+
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500">Data produção</dt>
+            <dd class="mt-1 text-sm text-slate-200">
+              {{ loteAtual.dataProd | date:'dd/MM/yyyy' }}
+            </dd>
+          </div>
+
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500">Turno</dt>
+            <dd class="mt-1 text-sm text-slate-200">
+              {{ turnoLabel(loteAtual.turno) }}
+            </dd>
+          </div>
+
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500">Operador</dt>
+            <dd class="mt-1 text-sm text-slate-200">
+              {{ loteAtual.operador?.nome }}
+            </dd>
+          </div>
+
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500">Linha</dt>
+            <dd class="mt-1 text-sm text-slate-200">
+              {{ loteAtual.linha }}
+            </dd>
+          </div>
+
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500">Qtd. produzida</dt>
+            <dd class="mt-1 text-sm text-slate-200">
+              {{ loteAtual.qtdProduzida | number:'1.0-0' }}
+            </dd>
+          </div>
+
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500">Qtd. reprovada</dt>
+            <dd class="mt-1 text-sm text-slate-200">
+              {{ loteAtual.qtdReprovada | number:'1.0-0' }}
+            </dd>
+          </div>
+
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500">Aberto em</dt>
+            <dd class="mt-1 text-sm text-slate-200">
+              {{ loteAtual.createdAt | date:'dd/MM/yyyy HH:mm' }}
+            </dd>
+          </div>
+
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500">Encerrado em</dt>
+            <dd class="mt-1 text-sm text-slate-200">
+              {{ loteAtual.encerradoEm ? (loteAtual.encerradoEm | date:'dd/MM/yyyy HH:mm') : '—' }}
+            </dd>
+          </div>
+        </dl>
+
+        @if (loteAtual.observacoes) {
+          <div class="mt-4 rounded-xl border border-slate-800 bg-slate-950 p-4">
+            <p class="text-xs uppercase tracking-wide text-slate-500">Observações</p>
+            <p class="mt-2 text-sm leading-relaxed text-slate-300">
+              {{ loteAtual.observacoes }}
+            </p>
+          </div>
+        }
+      </div>
+
+      <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+        <h2 class="mb-4 text-lg font-semibold text-white">Inspeção</h2>
+
+        @if (loteAtual.inspecao) {
+        <div class="space-y-3">
+            <p class="text-sm text-slate-200">
+            <strong>Resultado:</strong>
+            {{ getStatusLabel(loteAtual.inspecao.resultado || '') }}
+            </p>
+
+            <p class="text-sm text-slate-200">
+            <strong>Qtd. reprovada:</strong>
+            {{ loteAtual.inspecao.qtdReprovada }}
+            </p>
+
+            <p class="text-sm text-slate-200">
+            <strong>Data:</strong>
+            {{ loteAtual.inspecao.dataInspecao | date:'dd/MM/yyyy HH:mm' }}
+            </p>
+
+            <p class="text-sm text-slate-200">
+            <strong>Inspetor:</strong>
+            {{ loteAtual.inspecao.inspetor?.nome || '—' }}
+            </p>
+
+            @if (loteAtual.inspecao.desvio) {
+            <div class="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                <p class="text-xs uppercase tracking-wide text-slate-500">Desvio</p>
+                <p class="mt-2 text-sm leading-relaxed text-slate-300">
+                {{ loteAtual.inspecao.desvio }}
+                </p>
+            </div>
+            }
+        </div>
+        } @else {
+        <div class="rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">
+            Nenhuma inspeção registrada para este lote.
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-white">Insumos vinculados</h2>
+
+        @if (loteAtual.status === 'em_producao') {
+          <a
+            [routerLink]="['/app/lotes', loteAtual.id, 'insumos']"
+            class="text-sm font-medium text-cyan-400 hover:text-cyan-300"
+          >
+            Adicionar / remover
+          </a>
+        }
+      </div>
+
+      @if (loteAtual.insumos.length === 0) {
+        <div class="rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">
+          Nenhum insumo vinculado a este lote.
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-slate-800">
+            <thead>
+              <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
+                <th class="py-3 pr-4">Insumo</th>
+                <th class="py-3 pr-4">Código</th>
+                <th class="py-3 pr-4">Lote do insumo</th>
+                <th class="py-3 pr-4">Quantidade</th>
+                <th class="py-3 pr-4">Unidade</th>
+              </tr>
+            </thead>
+
+            <tbody class="divide-y divide-slate-800 text-sm text-slate-300">
+              @for (ins of loteAtual.insumos; track ins.id) {
+                <tr>
+                  <td class="py-4 pr-4 font-medium text-white">{{ ins.nome }}</td>
+                  <td class="py-4 pr-4">{{ ins.codigo || '—' }}</td>
+                  <td class="py-4 pr-4">{{ ins.loteInsumo || '—' }}</td>
+                  <td class="py-4 pr-4">{{ ins.quantidade }}</td>
+                  <td class="py-4 pr-4">{{ ins.unidade }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+</section>

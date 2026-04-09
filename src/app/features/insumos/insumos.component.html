@@ -1,0 +1,188 @@
+<section class="space-y-6">
+  @if (loading()) {
+    <div class="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-slate-300">
+      Carregando insumos...
+    </div>
+  }
+
+  @if (error()) {
+    <div class="rounded-2xl border border-red-900 bg-red-950/40 p-4 text-red-300">
+      {{ error() }}
+    </div>
+  }
+
+  @if (success()) {
+    <div class="rounded-2xl border border-emerald-900 bg-emerald-950/40 p-4 text-emerald-300">
+      {{ success() }}
+    </div>
+  }
+
+  @if (lote(); as loteAtual) {
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <p class="text-sm text-slate-400">Insumos do lote</p>
+        <h1 class="mt-1 text-2xl font-bold text-white font-mono">
+          {{ loteAtual.numero }}
+        </h1>
+        <p class="mt-1 text-sm text-slate-400">
+          {{ loteAtual.produtoNome }} • {{ loteAtual.linha }}
+        </p>
+      </div>
+
+      <div class="flex gap-2">
+        <a
+          [routerLink]="['/app/lotes', loteAtual.id]"
+          class="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
+        >
+          Voltar ao lote
+        </a>
+      </div>
+    </div>
+
+    @if (!canEdit) {
+      <div class="rounded-2xl border border-amber-900 bg-amber-950/40 p-4 text-amber-300">
+        Este lote não está em produção. Os insumos ficam somente para consulta.
+      </div>
+    }
+
+    <div class="grid gap-6 lg:grid-cols-3">
+      <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5 lg:col-span-2">
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-white">Insumos vinculados</h2>
+          <span class="text-sm text-slate-400">
+            {{ insumos().length }} item(ns)
+          </span>
+        </div>
+
+        @if (insumos().length === 0) {
+          <div class="rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">
+            Nenhum insumo vinculado a este lote.
+          </div>
+        } @else {
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-800">
+              <thead>
+                <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
+                  <th class="py-3 pr-4">Insumo</th>
+                  <th class="py-3 pr-4">Código</th>
+                  <th class="py-3 pr-4">Lote do insumo</th>
+                  <th class="py-3 pr-4">Quantidade</th>
+                  <th class="py-3 pr-4">Unidade</th>
+                  <th class="py-3 pr-4">Ações</th>
+                </tr>
+              </thead>
+
+              <tbody class="divide-y divide-slate-800 text-sm text-slate-300">
+                @for (ins of insumos(); track ins.id) {
+                  <tr>
+                    <td class="py-4 pr-4 font-medium text-white">{{ ins.nome }}</td>
+                    <td class="py-4 pr-4">{{ ins.codigo || '—' }}</td>
+                    <td class="py-4 pr-4">{{ ins.loteInsumo || '—' }}</td>
+                    <td class="py-4 pr-4">{{ ins.quantidade }}</td>
+                    <td class="py-4 pr-4">{{ ins.unidade }}</td>
+                    <td class="py-4 pr-4">
+                      @if (canEdit) {
+                        <button
+                          type="button"
+                          (click)="removerInsumo(ins.id)"
+                          [disabled]="removingId() === ins.id"
+                          class="text-xs font-medium text-red-400 hover:text-red-300 disabled:opacity-50"
+                        >
+                          {{ removingId() === ins.id ? 'Removendo...' : 'Remover' }}
+                        </button>
+                      } @else {
+                        <span class="text-xs text-slate-500">Somente leitura</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+        <h2 class="mb-4 text-lg font-semibold text-white">Adicionar insumo</h2>
+
+        <div class="space-y-4">
+          <div>
+            <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
+              Nome do insumo
+            </label>
+            <input
+              [(ngModel)]="form.nomeInsumo"
+              [disabled]="!canEdit"
+              type="text"
+              class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
+              placeholder="Ex: Resina Epóxi"
+            />
+          </div>
+
+          <div>
+            <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
+              Código do insumo
+            </label>
+            <input
+              [(ngModel)]="form.codigoInsumo"
+              [disabled]="!canEdit"
+              type="text"
+              class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
+              placeholder="Ex: INS-001"
+            />
+          </div>
+
+          <div>
+            <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
+              Lote do insumo
+            </label>
+            <input
+              [(ngModel)]="form.loteInsumo"
+              [disabled]="!canEdit"
+              type="text"
+              class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
+              placeholder="Ex: MAT-2026-0091"
+            />
+          </div>
+
+          <div>
+            <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
+              Quantidade
+            </label>
+            <input
+              [(ngModel)]="form.quantidade"
+              [disabled]="!canEdit"
+              type="number"
+              min="0"
+              step="0.01"
+              class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
+              placeholder="Ex: 12.5"
+            />
+          </div>
+
+          <div>
+            <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
+              Unidade
+            </label>
+            <input
+              [(ngModel)]="form.unidade"
+              [disabled]="!canEdit"
+              type="text"
+              class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
+              placeholder="Ex: kg"
+            />
+          </div>
+
+          <button
+            type="button"
+            (click)="adicionarInsumo()"
+            [disabled]="saving() || !canEdit"
+            class="w-full rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-50"
+          >
+            {{ saving() ? 'Salvando...' : 'Adicionar insumo' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</section>

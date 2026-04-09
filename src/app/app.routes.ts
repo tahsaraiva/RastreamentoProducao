@@ -40,6 +40,11 @@ export const routes: Routes = [
         path: 'rastreabilidade',
         loadComponent: () => import('./features/rastreabilidade/rastreabilidade.component').then(m => m.RastreabilidadeComponent),
       },
+      {
+        path: 'produtos',
+        loadComponent: () =>
+          import('./features/produtos/produtos.component').then(m => m.ProdutosComponent),
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

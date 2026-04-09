@@ -1,0 +1,170 @@
+<section class="space-y-6">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <p class="text-sm text-slate-400">Gestão de produtos</p>
+      <h1 class="mt-1 text-2xl font-bold text-white">Produtos</h1>
+    </div>
+
+    <button
+      type="button"
+      (click)="novoProduto()"
+      class="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
+    >
+      Novo produto
+    </button>
+  </div>
+
+  @if (error()) {
+    <div class="rounded-2xl border border-red-900 bg-red-950/40 p-4 text-red-300">
+      {{ error() }}
+    </div>
+  }
+
+  @if (success()) {
+    <div class="rounded-2xl border border-emerald-900 bg-emerald-950/40 p-4 text-emerald-300">
+      {{ success() }}
+    </div>
+  }
+
+  <div class="grid gap-6 lg:grid-cols-3">
+    <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5 lg:col-span-1">
+      <h2 class="mb-4 text-lg font-semibold text-white">
+        {{ editandoId() ? 'Editar produto' : 'Novo produto' }}
+      </h2>
+
+      <div class="space-y-4">
+        <div>
+          <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
+            Código
+          </label>
+          <input
+            [(ngModel)]="form.codigo"
+            [disabled]="saving()"
+            type="text"
+            class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
+            placeholder="Ex: PRD-001"
+          />
+        </div>
+
+        <div>
+          <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
+            Nome
+          </label>
+          <input
+            [(ngModel)]="form.nome"
+            [disabled]="saving()"
+            type="text"
+            class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
+            placeholder="Ex: Placa Eletrônica A"
+          />
+        </div>
+
+        <div>
+          <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
+            Linha
+          </label>
+          <input
+            [(ngModel)]="form.linha"
+            [disabled]="saving()"
+            type="text"
+            class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
+            placeholder="Ex: Linha SMT 01"
+          />
+        </div>
+
+        <div>
+          <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
+            Descrição
+          </label>
+          <textarea
+            [(ngModel)]="form.descricao"
+            [disabled]="saving()"
+            rows="4"
+            class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
+            placeholder="Descrição opcional"
+          ></textarea>
+        </div>
+
+        <button
+          type="button"
+          (click)="salvar()"
+          [disabled]="saving()"
+          class="w-full rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-50"
+        >
+          {{ saving() ? 'Salvando...' : (editandoId() ? 'Atualizar produto' : 'Criar produto') }}
+        </button>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5 lg:col-span-2">
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-white">Produtos cadastrados</h2>
+        <span class="text-sm text-slate-400">{{ produtos().length }} item(ns)</span>
+      </div>
+
+      @if (loading()) {
+        <div class="rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">
+          Carregando produtos...
+        </div>
+      } @else if (produtos().length === 0) {
+        <div class="rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">
+          Nenhum produto cadastrado.
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-slate-800">
+            <thead>
+              <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
+                <th class="py-3 pr-4">Código</th>
+                <th class="py-3 pr-4">Nome</th>
+                <th class="py-3 pr-4">Linha</th>
+                <th class="py-3 pr-4">Status</th>
+                <th class="py-3 pr-4">Ações</th>
+              </tr>
+            </thead>
+
+            <tbody class="divide-y divide-slate-800 text-sm text-slate-300">
+              @for (produto of produtos(); track produto.id) {
+                <tr>
+                  <td class="py-4 pr-4 font-medium text-white">{{ produto.codigo }}</td>
+                  <td class="py-4 pr-4">{{ produto.nome }}</td>
+                  <td class="py-4 pr-4">{{ produto.linha }}</td>
+                  <td class="py-4 pr-4">
+                    @if (produto.ativo) {
+                      <span class="rounded-full bg-emerald-950 px-2 py-1 text-xs text-emerald-300">
+                        Ativo
+                      </span>
+                    } @else {
+                      <span class="rounded-full bg-red-950 px-2 py-1 text-xs text-red-300">
+                        Inativo
+                      </span>
+                    }
+                  </td>
+                  <td class="py-4 pr-4">
+                    <div class="flex gap-3">
+                      <button
+                        type="button"
+                        (click)="editarProduto(produto)"
+                        class="text-xs font-medium text-cyan-400 hover:text-cyan-300"
+                      >
+                        Editar
+                      </button>
+
+                      <button
+                        type="button"
+                        (click)="toggleAtivo(produto)"
+                        class="text-xs font-medium text-amber-400 hover:text-amber-300"
+                      >
+                        {{ produto.ativo ? 'Inativar' : 'Reativar' }}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+</section>
