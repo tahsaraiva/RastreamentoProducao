@@ -1,260 +1,208 @@
-import { Component, inject, OnInit, signal, Input } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, Router } from '@angular/router';
-import { MockDataService } from '../../../core/services/mock-data.service';
-import { Lote, STATUS_LABELS, STATUS_CSS, TURNO_LABELS, RESULTADO_LABELS } from '../../../shared/models';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { LoteApiService, LoteApi } from '../../../core/services/lote-api.service';
+
+interface LoteDetailView {
+  id: string;
+  numero: string;
+  dataProd: Date;
+  turno: 'manha' | 'tarde' | 'noite';
+  linha: string;
+  qtdProduzida: number;
+  qtdReprovada: number;
+  status: string;
+  observacoes?: string | null;
+  createdAt?: Date | null;
+  encerradoEm?: Date | null;
+  produto?: {
+    id: string;
+    nome: string;
+    codigo: string;
+    unidade: string;
+  };
+  operador?: {
+    id: string;
+    nome: string;
+    email: string;
+  };
+  insumos: Array<{
+    id: string;
+    nome: string;
+    codigo?: string | null;
+    loteInsumo?: string | null;
+    quantidade: number;
+    unidade: string;
+  }>;
+  inspecao?: {
+    id: string;
+    resultado: string;
+    qtdReprovada: number;
+    desvio?: string | null;
+    dataInspecao: Date;
+    inspetor?: {
+      id: string;
+      nome: string;
+      email: string;
+    } | null;
+  } | null;
+}
+
+const STATUS_LABELS_LOCAL: Record<string, string> = {
+  em_producao: 'Em produção',
+  aguardando_inspecao: 'Aguardando inspeção',
+  aprovado: 'Aprovado',
+  aprovado_restricao: 'Aprovado c/ restrição',
+  aprovado_com_restricao: 'Aprovado c/ restrição',
+  reprovado: 'Reprovado',
+};
+
+const STATUS_CSS_LOCAL: Record<string, string> = {
+  em_producao: 'badge-em-producao',
+  aguardando_inspecao: 'badge-aguardando-inspecao',
+  aprovado: 'badge-aprovado',
+  aprovado_restricao: 'badge-aprovado-com-restricao',
+  aprovado_com_restricao: 'badge-aprovado-com-restricao',
+  reprovado: 'badge-reprovado',
+};
+
+const TURNO_LABELS_LOCAL: Record<string, string> = {
+  manha: 'Manhã',
+  tarde: 'Tarde',
+  noite: 'Noite',
+};
 
 @Component({
   selector: 'app-lote-detail',
   standalone: true,
   imports: [CommonModule, RouterLink],
-  template: `
-    <div class="animate-slide-up max-w-4xl">
-      <a routerLink="/app/lotes" class="text-sm text-slate-500 hover:text-slate-300 flex items-center gap-1 mb-4 transition-colors">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-        </svg>
-        Voltar para lotes
-      </a>
-
-      @if (!lote()) {
-        <div class="card text-center py-16 text-slate-500">Lote não encontrado.</div>
-      } @else {
-        <!-- Header -->
-        <div class="flex items-start justify-between flex-wrap gap-4 mb-6">
-          <div>
-            <div class="flex items-center gap-3 mb-1">
-              <h1 class="font-display text-2xl font-bold text-slate-50 font-mono">{{ lote()!.numero }}</h1>
-              <span [class]="getStatusCss(lote()!.status)">{{ getStatusLabel(lote()!.status) }}</span>
-            </div>
-            <p class="text-slate-400 text-sm">{{ lote()!.produto?.nome }}</p>
-          </div>
-
-          <!-- Actions -->
-          <div class="flex items-center gap-2 flex-wrap">
-            @if (lote()!.status === 'em_producao') {
-              <a [routerLink]="['/app/lotes', lote()!.id, 'insumos']" class="btn-secondary">
-                🔗 Gerenciar insumos
-              </a>
-              <button (click)="encerrarLote()" class="btn-primary">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Encerrar lote
-              </button>
-            }
-            @if (lote()!.status === 'aguardando_inspecao') {
-              <a [routerLink]="['/app/lotes', lote()!.id, 'inspecao']" class="btn-primary">
-                🔬 Registrar inspeção
-              </a>
-            }
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-          <!-- Left: main data -->
-          <div class="lg:col-span-2 space-y-6">
-
-            <!-- Lote data -->
-            <div class="card">
-              <h2 class="section-title">Dados do lote</h2>
-              <dl class="grid grid-cols-2 gap-x-6 gap-y-4">
-                <div>
-                  <dt class="text-xs text-slate-500 uppercase tracking-wider mb-1">Produto</dt>
-                  <dd class="text-sm text-slate-200 font-medium">{{ lote()!.produto?.nome }}</dd>
-                  <dd class="text-xs text-slate-500">{{ lote()!.produto?.codigo }}</dd>
-                </div>
-                <div>
-                  <dt class="text-xs text-slate-500 uppercase tracking-wider mb-1">Data de Produção</dt>
-                  <dd class="text-sm text-slate-200">{{ lote()!.dataProd | date:'dd/MM/yyyy' }}</dd>
-                </div>
-                <div>
-                  <dt class="text-xs text-slate-500 uppercase tracking-wider mb-1">Turno</dt>
-                  <dd class="text-sm text-slate-200">{{ turnoLabel(lote()!.turno) }}</dd>
-                </div>
-                <div>
-                  <dt class="text-xs text-slate-500 uppercase tracking-wider mb-1">Operador</dt>
-                  <dd class="text-sm text-slate-200">{{ lote()!.operador }}</dd>
-                </div>
-                <div>
-                  <dt class="text-xs text-slate-500 uppercase tracking-wider mb-1">Qtd. Produzida</dt>
-                  <dd class="text-sm text-slate-200 font-mono font-medium">
-                    {{ lote()!.qtdProduzida | number:'1.0-0' }}
-                    <span class="text-slate-500 font-sans font-normal">{{ lote()!.produto?.unidade }}</span>
-                  </dd>
-                </div>
-                @if (lote()!.qtdReprovada) {
-                  <div>
-                    <dt class="text-xs text-slate-500 uppercase tracking-wider mb-1">Qtd. Reprovada</dt>
-                    <dd class="text-sm text-red-400 font-mono font-medium">
-                      {{ lote()!.qtdReprovada | number:'1.0-0' }}
-                    </dd>
-                  </div>
-                }
-                <div>
-                  <dt class="text-xs text-slate-500 uppercase tracking-wider mb-1">Abertura</dt>
-                  <dd class="text-sm text-slate-200">{{ lote()!.createdAt | date:'dd/MM/yyyy HH:mm' }}</dd>
-                </div>
-                <div>
-                  <dt class="text-xs text-slate-500 uppercase tracking-wider mb-1">Última atualização</dt>
-                  <dd class="text-sm text-slate-200">{{ lote()!.updatedAt | date:'dd/MM/yyyy HH:mm' }}</dd>
-                </div>
-              </dl>
-              @if (lote()!.observacoes) {
-                <div class="mt-4 pt-4 border-t border-slate-800">
-                  <dt class="text-xs text-slate-500 uppercase tracking-wider mb-1">Observações</dt>
-                  <dd class="text-sm text-slate-300">{{ lote()!.observacoes }}</dd>
-                </div>
-              }
-            </div>
-
-            <!-- Insumos -->
-            <div class="card">
-              <div class="flex items-center justify-between mb-4">
-                <h2 class="section-title mb-0">
-                  Insumos vinculados
-                  <span class="text-slate-500 font-normal text-sm">({{ lote()!.insumos?.length ?? 0 }})</span>
-                </h2>
-                @if (lote()!.status === 'em_producao') {
-                  <a [routerLink]="['/app/lotes', lote()!.id, 'insumos']" class="btn-secondary text-xs px-3 py-1.5">
-                    + Adicionar
-                  </a>
-                }
-              </div>
-
-              @if (!lote()!.insumos || lote()!.insumos!.length === 0) {
-                <div class="text-center py-8 text-slate-500 text-sm">
-                  Nenhum insumo vinculado a este lote.
-                </div>
-              } @else {
-                <div class="space-y-2">
-                  @for (ins of lote()!.insumos; track ins.id) {
-                    <div class="flex items-center gap-4 px-4 py-3 bg-slate-800/50 rounded-lg border border-slate-800">
-                      <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-slate-200">{{ ins.nomeInsumo }}</p>
-                        <p class="text-xs text-slate-500">
-                          {{ ins.codigoInsumo }} · Lote: <span class="font-mono text-slate-400">{{ ins.loteInsumo }}</span>
-                        </p>
-                      </div>
-                      <div class="text-right flex-shrink-0">
-                        <p class="text-sm font-mono text-slate-200">{{ ins.quantidade }} {{ ins.unidade }}</p>
-                        @if (ins.fornecedor) {
-                          <p class="text-xs text-slate-500">{{ ins.fornecedor }}</p>
-                        }
-                      </div>
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-          </div>
-
-          <!-- Right: inspeção + rastreabilidade -->
-          <div class="space-y-6">
-
-            <!-- Inspeção -->
-            <div class="card">
-              <h2 class="section-title">Inspeção de Qualidade</h2>
-
-              @if (!lote()!.inspecao) {
-                <div class="text-center py-6">
-                  @if (lote()!.status === 'aguardando_inspecao') {
-                    <div class="badge-aguardando-inspecao mb-3 mx-auto w-fit">Pendente</div>
-                    <p class="text-sm text-slate-500 mb-4">Este lote está aguardando inspeção.</p>
-                    <a [routerLink]="['/app/lotes', lote()!.id, 'inspecao']" class="btn-primary w-full justify-center">
-                      Registrar inspeção
-                    </a>
-                  } @else {
-                    <p class="text-sm text-slate-500">Inspeção não realizada ainda.</p>
-                  }
-                </div>
-              } @else {
-                <dl class="space-y-3">
-                  <div>
-                    <dt class="text-xs text-slate-500 uppercase tracking-wider mb-1">Resultado</dt>
-                    <dd>
-                      <span [class]="resultadoCss(lote()!.inspecao!.resultado)">
-                        {{ resultadoLabel(lote()!.inspecao!.resultado) }}
-                      </span>
-                    </dd>
-                  </div>
-                  <div>
-                    <dt class="text-xs text-slate-500 uppercase tracking-wider mb-1">Inspetor</dt>
-                    <dd class="text-sm text-slate-300">{{ lote()!.inspecao!.inspetor }}</dd>
-                  </div>
-                  <div>
-                    <dt class="text-xs text-slate-500 uppercase tracking-wider mb-1">Data</dt>
-                    <dd class="text-sm text-slate-300">{{ lote()!.inspecao!.dataInspecao | date:'dd/MM/yyyy HH:mm' }}</dd>
-                  </div>
-                  @if (lote()!.inspecao!.qtdReprovada) {
-                    <div>
-                      <dt class="text-xs text-slate-500 uppercase tracking-wider mb-1">Qtd. Reprovada</dt>
-                      <dd class="text-sm text-red-400 font-mono">{{ lote()!.inspecao!.qtdReprovada }}</dd>
-                    </div>
-                  }
-                  @if (lote()!.inspecao!.desvio) {
-                    <div>
-                      <dt class="text-xs text-slate-500 uppercase tracking-wider mb-1">Desvio</dt>
-                      <dd class="text-sm text-slate-300 leading-relaxed">{{ lote()!.inspecao!.desvio }}</dd>
-                    </div>
-                  }
-                </dl>
-              }
-            </div>
-
-            <!-- Rastreabilidade shortcut -->
-            <div class="card bg-brand-600/5 border-brand-600/20">
-              <h2 class="section-title">Rastreabilidade</h2>
-              <p class="text-xs text-slate-400 mb-4">
-                Consulte a árvore completa de insumos ou veja todos os lotes que usaram os mesmos insumos.
-              </p>
-              <a routerLink="/app/rastreabilidade"
-                 [queryParams]="{ q: lote()!.numero }"
-                 class="btn-primary w-full justify-center text-sm">
-                🔍 Rastrear este lote
-              </a>
-            </div>
-          </div>
-        </div>
-      }
-    </div>
-  `,
+  templateUrl: './lote-detail.component.html',
 })
 export class LoteDetailComponent implements OnInit {
-  @Input() id!: string;
-
-  private data = inject(MockDataService);
+  private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private loteApi = inject(LoteApiService);
 
-  lote = signal<Lote | null>(null);
+  loading = signal(true);
+  encerrarLoading = signal(false);
+  error = signal<string | null>(null);
+  lote = signal<LoteDetailView | null>(null);
 
-  ngOnInit() {
-    const l = this.data.getLoteCompleto(this.id);
-    this.lote.set(l ?? null);
-  }
+  async ngOnInit() {
+    const id = this.route.snapshot.paramMap.get('id');
 
-  encerrarLote() {
-    const l = this.lote();
-    if (!l) return;
-    const idx = this.data.lotes.findIndex(x => x.id === l.id);
-    if (idx >= 0) {
-      this.data.lotes[idx] = { ...this.data.lotes[idx], status: 'aguardando_inspecao', updatedAt: new Date() };
+    if (!id) {
+      this.error.set('ID do lote não informado.');
+      this.loading.set(false);
+      return;
     }
-    this.lote.set({ ...l, status: 'aguardando_inspecao', updatedAt: new Date() });
+
+    await this.loadLote(id);
   }
 
-  getStatusLabel(s: string) { return STATUS_LABELS[s as keyof typeof STATUS_LABELS] ?? s; }
-  getStatusCss(s: string) { return STATUS_CSS[s as keyof typeof STATUS_CSS] ?? 'badge'; }
-  turnoLabel(t: string) { return TURNO_LABELS[t as keyof typeof TURNO_LABELS] ?? t; }
-  resultadoLabel(r: string) { return RESULTADO_LABELS[r as keyof typeof RESULTADO_LABELS] ?? r; }
-  resultadoCss(r: string) {
-    const map: Record<string, string> = {
-      aprovado: 'badge-aprovado',
-      aprovado_com_restricao: 'badge-aprovado-com-restricao',
-      reprovado: 'badge-reprovado',
+  async loadLote(id: string) {
+    try {
+      this.loading.set(true);
+      this.error.set(null);
+
+      const response = await this.loteApi.getById(id);
+      this.lote.set(this.mapLote(response));
+    } catch (error: any) {
+      this.error.set(
+        error?.error?.message ?? 'Não foi possível carregar o lote.'
+      );
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  async encerrarLote() {
+    const current = this.lote();
+
+    if (!current) return;
+    if (current.status !== 'em_producao') return;
+
+    try {
+      this.encerrarLoading.set(true);
+      const updated = await this.loteApi.updateStatus(
+        current.id,
+        'aguardando_inspecao'
+      );
+
+      this.lote.set(this.mapLote(updated));
+    } catch (error: any) {
+      this.error.set(
+        error?.error?.message ?? 'Não foi possível encerrar o lote.'
+      );
+    } finally {
+      this.encerrarLoading.set(false);
+    }
+  }
+
+  private mapLote(lote: LoteApi): LoteDetailView {
+    return {
+      id: String(lote.id),
+      numero: lote.numeroLote,
+      dataProd: new Date(lote.dataProducao),
+      turno: lote.turno,
+      linha: lote.linha,
+      qtdProduzida: lote.quantidadeProd,
+      qtdReprovada: lote.quantidadeRepr,
+      status: lote.status,
+      observacoes: lote.observacoes ?? null,
+      createdAt: lote.abertoEm ? new Date(lote.abertoEm) : null,
+      encerradoEm: lote.encerradoEm ? new Date(lote.encerradoEm) : null,
+      produto: lote.produto
+        ? {
+            id: String(lote.produto.id),
+            nome: lote.produto.nome,
+            codigo: lote.produto.codigo,
+            unidade: 'unid.',
+          }
+        : undefined,
+      operador: lote.operador
+        ? {
+            id: String(lote.operador.id),
+            nome: lote.operador.nome,
+            email: lote.operador.email,
+          }
+        : undefined,
+      insumos: (lote.insumos ?? []).map((ins) => ({
+        id: String(ins.id),
+        nome: ins.nomeInsumo,
+        codigo: ins.codigoInsumo ?? null,
+        loteInsumo: ins.loteInsumo ?? null,
+        quantidade: ins.quantidade,
+        unidade: ins.unidade,
+      })),
+      inspecao: lote.inspecao
+        ? {
+            id: String(lote.inspecao.id),
+            resultado: lote.inspecao.resultado,
+            qtdReprovada: lote.inspecao.quantidadeRepr,
+            desvio: lote.inspecao.descricaoDesvio ?? null,
+            dataInspecao: new Date(lote.inspecao.inspecionadoEm),
+            inspetor: lote.inspecao.inspetor
+              ? {
+                  id: String(lote.inspecao.inspetor.id),
+                  nome: lote.inspecao.inspetor.nome,
+                  email: lote.inspecao.inspetor.email,
+                }
+              : null,
+          }
+        : null,
     };
-    return map[r] ?? 'badge';
+  }
+
+  getStatusLabel(status: string) {
+    return STATUS_LABELS_LOCAL[status] ?? status;
+  }
+
+  getStatusCss(status: string) {
+    return STATUS_CSS_LOCAL[status] ?? 'badge';
+  }
+
+  turnoLabel(turno: string) {
+    return TURNO_LABELS_LOCAL[turno] ?? turno;
   }
 }

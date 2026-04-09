@@ -73,13 +73,14 @@ export interface User {
   id: string;
   nome: string;
   email: string;
-  perfil: 'admin' | 'operador' | 'inspetor' | 'gestor';
+  perfil: 'operador' | 'inspetor' | 'gestor';
   avatar?: string;
 }
 
 export interface AuthState {
   user: User | null;
   token: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
 }
 

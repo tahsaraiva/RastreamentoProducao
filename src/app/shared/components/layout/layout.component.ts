@@ -84,7 +84,8 @@ export class LayoutComponent {
 
   navItems: NavItem[] = [
     { label: 'Dashboard',          route: '/app/dashboard', icon: '📊' },
-    { label: 'Lotes de Produção',  route: '/app/lotes',     icon: '📦', badge: 2 },
+    { label: 'Lotes de Produção',  route: '/app/lotes',     icon: '📦', },
+    { label: 'Criar Produto',  route: '/app/produtos',     icon: '📦', },
   ];
 
   qualityItems: NavItem[] = [

@@ -1,0 +1,283 @@
+<section class="space-y-6">
+  <div>
+    <h1 class="text-2xl font-bold text-white">Rastreabilidade</h1>
+    <p class="mt-1 text-sm text-slate-400">
+      Consulte por número de lote ou por insumo para identificar impacto produtivo.
+    </p>
+  </div>
+
+  @if (error()) {
+    <div class="rounded-2xl border border-red-900 bg-red-950/40 p-4 text-red-300">
+      {{ error() }}
+    </div>
+  }
+
+  <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+    <div class="grid gap-4 md:grid-cols-4">
+      <div class="md:col-span-1">
+        <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
+          Tipo de busca
+        </label>
+
+        <select
+          [ngModel]="tipoBusca()"
+          (ngModelChange)="tipoBusca.set($event)"
+          class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+        >
+          <option value="lote">Por lote</option>
+          <option value="insumo">Por insumo</option>
+        </select>
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
+          Termo
+        </label>
+
+        <input
+          [ngModel]="termo()"
+          (ngModelChange)="termo.set($event)"
+          type="text"
+          class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+          [placeholder]="tipoBusca() === 'lote' ? 'Ex: LOT-2026-00006' : 'Ex: INS-001 ou MAT-2026-0091'"
+        />
+      </div>
+
+      <div class="flex items-end gap-2">
+        <button
+          type="button"
+          (click)="buscar()"
+          [disabled]="loading()"
+          class="w-full rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-50"
+        >
+          {{ loading() ? 'Buscando...' : 'Buscar' }}
+        </button>
+
+        <button
+          type="button"
+          (click)="limpar()"
+          class="w-full rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
+        >
+          Limpar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  @if (resultadoLote(); as resultado) {
+    <div class="grid gap-6 lg:grid-cols-3">
+      <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5 lg:col-span-2">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <p class="text-sm text-slate-400">Resultado por lote</p>
+            <h2 class="mt-1 text-2xl font-bold text-white font-mono">
+              {{ resultado.numero }}
+            </h2>
+          </div>
+
+          <a
+            [routerLink]="['/app/lotes', resultado.numero]"
+            class="hidden"
+          ></a>
+        </div>
+
+        <dl class="mt-4 grid gap-4 sm:grid-cols-2">
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500">Produto</dt>
+            <dd class="mt-1 text-sm text-slate-200">
+              {{ resultado.produto.nome }} ({{ resultado.produto.codigo }})
+            </dd>
+          </div>
+
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500">Status</dt>
+            <dd class="mt-1 text-sm text-slate-200">
+              {{ getStatusLabel(resultado.status) }}
+            </dd>
+          </div>
+
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500">Data produção</dt>
+            <dd class="mt-1 text-sm text-slate-200">
+              {{ resultado.dataProd | date:'dd/MM/yyyy' }}
+            </dd>
+          </div>
+
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500">Turno</dt>
+            <dd class="mt-1 text-sm text-slate-200">
+              {{ turnoLabel(resultado.turno) }}
+            </dd>
+          </div>
+
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500">Operador</dt>
+            <dd class="mt-1 text-sm text-slate-200">
+              {{ resultado.operador.nome }}
+            </dd>
+          </div>
+
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500">Linha</dt>
+            <dd class="mt-1 text-sm text-slate-200">
+              {{ resultado.linha }}
+            </dd>
+          </div>
+
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500">Quantidade produzida</dt>
+            <dd class="mt-1 text-sm text-slate-200">
+              {{ resultado.quantidadeProd | number:'1.0-0' }}
+            </dd>
+          </div>
+
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-slate-500">Quantidade reprovada</dt>
+            <dd class="mt-1 text-sm text-slate-200">
+              {{ resultado.quantidadeRepr | number:'1.0-0' }}
+            </dd>
+          </div>
+        </dl>
+
+        @if (resultado.observacoes) {
+          <div class="mt-4 rounded-xl border border-slate-800 bg-slate-950 p-4">
+            <p class="text-xs uppercase tracking-wide text-slate-500">Observações</p>
+            <p class="mt-2 text-sm text-slate-300">{{ resultado.observacoes }}</p>
+          </div>
+        }
+      </div>
+
+      <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+        <h2 class="mb-4 text-lg font-semibold text-white">Inspeção</h2>
+
+        @if (resultado.inspecao) {
+          <div class="space-y-3 text-sm text-slate-300">
+            <p><strong>Resultado:</strong> {{ getStatusLabel(resultado.inspecao.resultado) }}</p>
+            <p><strong>Qtd. reprovada:</strong> {{ resultado.inspecao.quantidadeRepr }}</p>
+            <p><strong>Data:</strong> {{ resultado.inspecao.inspecionadoEm | date:'dd/MM/yyyy HH:mm' }}</p>
+            <p><strong>Inspetor:</strong> {{ resultado.inspecao.inspetor?.nome || '—' }}</p>
+
+            @if (resultado.inspecao.descricaoDesvio) {
+              <div class="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                <p class="text-xs uppercase tracking-wide text-slate-500">Desvio</p>
+                <p class="mt-2 text-sm text-slate-300">
+                  {{ resultado.inspecao.descricaoDesvio }}
+                </p>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">
+            Nenhuma inspeção registrada.
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+      <h2 class="mb-4 text-lg font-semibold text-white">Insumos do lote</h2>
+
+      @if (resultado.insumos.length === 0) {
+        <div class="rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">
+          Nenhum insumo vinculado.
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-slate-800">
+            <thead>
+              <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
+                <th class="py-3 pr-4">Insumo</th>
+                <th class="py-3 pr-4">Código</th>
+                <th class="py-3 pr-4">Lote do insumo</th>
+                <th class="py-3 pr-4">Quantidade</th>
+                <th class="py-3 pr-4">Unidade</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800 text-sm text-slate-300">
+              @for (ins of resultado.insumos; track ins.id) {
+                <tr>
+                  <td class="py-4 pr-4 font-medium text-white">{{ ins.nome }}</td>
+                  <td class="py-4 pr-4">{{ ins.codigo || '—' }}</td>
+                  <td class="py-4 pr-4">{{ ins.loteInsumo || '—' }}</td>
+                  <td class="py-4 pr-4">{{ ins.quantidade }}</td>
+                  <td class="py-4 pr-4">{{ ins.unidade }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+
+  @if (resultadoInsumo(); as resultado) {
+    <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+      <div class="mb-4">
+        <p class="text-sm text-slate-400">Resultado por insumo</p>
+        <h2 class="mt-1 text-2xl font-bold text-white">
+          {{ resultado.termoBuscado }}
+        </h2>
+        <p class="mt-1 text-sm text-slate-400">
+          {{ resultado.totalLotesAfetados }} lote(s) afetado(s)
+        </p>
+      </div>
+
+      @if (resultado.lotesAfetados.length === 0) {
+        <div class="rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">
+          Nenhum lote encontrado.
+        </div>
+      } @else {
+        <div class="space-y-4">
+          @for (lote of resultado.lotesAfetados; track lote.id) {
+            <div class="rounded-xl border border-slate-800 bg-slate-950 p-4">
+              <div class="flex items-start justify-between gap-4">
+                <div>
+                  <h3 class="font-mono text-lg font-semibold text-white">
+                    {{ lote.numero }}
+                  </h3>
+                  <p class="mt-1 text-sm text-slate-400">
+                    {{ lote.produto.nome }} ({{ lote.produto.codigo }}) •
+                    {{ lote.dataProd | date:'dd/MM/yyyy' }}
+                  </p>
+                </div>
+
+                <span class="text-sm text-slate-300">
+                  {{ getStatusLabel(lote.status) }}
+                </span>
+              </div>
+
+              <div class="mt-4 grid gap-4 md:grid-cols-2">
+                <div>
+                  <p class="text-xs uppercase tracking-wide text-slate-500">Operador</p>
+                  <p class="mt-1 text-sm text-slate-300">{{ lote.operador.nome }}</p>
+                </div>
+
+                <div>
+                  <p class="text-xs uppercase tracking-wide text-slate-500">Quantidade produzida</p>
+                  <p class="mt-1 text-sm text-slate-300">{{ lote.quantidadeProd }}</p>
+                </div>
+              </div>
+
+              <div class="mt-4">
+                <p class="mb-2 text-xs uppercase tracking-wide text-slate-500">
+                  Insumos correspondentes
+                </p>
+
+                <div class="space-y-2">
+                  @for (ins of lote.insumosCorrespondentes; track ins.id) {
+                    <div class="rounded-lg border border-slate-800 px-3 py-2 text-sm text-slate-300">
+                      <strong class="text-white">{{ ins.nome }}</strong>
+                      — {{ ins.codigo || 's/código' }}
+                      — lote {{ ins.loteInsumo || 's/lote' }}
+                      — {{ ins.quantidade }} {{ ins.unidade }}
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</section>

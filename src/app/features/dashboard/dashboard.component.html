@@ -1,0 +1,96 @@
+<section class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+        <h1 class="text-2xl font-bold text-white">Dashboard</h1>
+        <p class="text-sm text-slate-400">
+            Visão geral da produção em tempo real
+        </p>
+        </div>
+    </div>
+
+    @if (loading()) {
+        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-slate-300">
+        Carregando dashboard...
+        </div>
+    }
+
+    @if (error()) {
+        <div class="rounded-2xl border border-red-900 bg-red-950/40 p-4 text-red-300">
+        {{ error() }}
+        </div>
+    }
+
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+        <p class="text-sm text-slate-400">Lotes Hoje</p>
+        <h2 class="mt-2 text-3xl font-bold text-white">
+            {{ metrics().lotesHoje }}
+        </h2>
+        </div>
+
+        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+        <p class="text-sm text-slate-400">Unidades Hoje</p>
+        <h2 class="mt-2 text-3xl font-bold text-white">
+            {{ metrics().unidadesHoje }}
+        </h2>
+        </div>
+
+        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+        <p class="text-sm text-slate-400">Taxa Aprovação</p>
+        <h2 class="mt-2 text-3xl font-bold text-white">
+            {{ metrics().taxaAprovacao }}%
+        </h2>
+        </div>
+
+        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+        <p class="text-sm text-slate-400">Aguardando Inspeção</p>
+        <h2 class="mt-2 text-3xl font-bold text-white">
+            {{ metrics().aguardandoInspecao }}
+        </h2>
+        </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+        <div class="mb-4 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-white">
+            Últimos lotes
+        </h2>
+        </div>
+
+        <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-800">
+            <thead>
+            <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
+                <th class="py-3 pr-4">Lote</th>
+                <th class="py-3 pr-4">Produto</th>
+                <th class="py-3 pr-4">Operador</th>
+                <th class="py-3 pr-4">Data</th>
+                <th class="py-3 pr-4">Status</th>
+            </tr>
+            </thead>
+
+            <tbody class="divide-y divide-slate-800 text-sm text-slate-300">
+            @for (lote of lotesRecentes(); track lote.id) {
+                <tr>
+                <td class="py-4 pr-4 font-medium text-white">
+                    {{ lote.numero }}
+                </td>
+                <td class="py-4 pr-4">
+                    {{ lote.produto.nome }}
+                </td>
+                <td class="py-4 pr-4">
+                    {{ lote.operador }}
+                </td>
+                <td class="py-4 pr-4">
+                    {{ lote.dataProd | date: 'dd/MM/yyyy' }}
+                </td>
+                <td class="py-4 pr-4">
+                    {{ lote.status }}
+                </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        </div>
+    </div>
+</section>

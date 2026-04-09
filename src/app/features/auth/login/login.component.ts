@@ -194,11 +194,11 @@ export class LoginComponent {
     { icon: '✅', label: 'Controle de qualidade', desc: 'Inspeção integrada ao fluxo produtivo' },
   ];
 
-  demoCreds: { email: string; role: string; senha: string }[] = [
-  { email: 'admin@rastreamento.com',    role: 'Admin',    senha: '123456' },
-  { email: 'gestor@rastreamento.com',   role: 'Gestor',   senha: '123456' },
-  { email: 'operador@rastreamento.com', role: 'Operador', senha: '123456' },
-  ];
+ demoCreds = [
+  { email: 'gestor@lotepim.com', role: 'Gestor', senha: '123456' },
+  { email: 'inspetor@lotepim.com', role: 'Inspetor', senha: '123456' },
+  { email: 'operador@lotepim.com', role: 'Operador', senha: '123456' },
+];
 
   fillCred(email: string, senha: string) {
     this.form.setValue({ email, senha });
