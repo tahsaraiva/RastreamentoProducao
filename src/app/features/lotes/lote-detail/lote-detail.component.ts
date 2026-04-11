@@ -88,6 +88,16 @@ export class LoteDetailComponent implements OnInit {
   error = signal<string | null>(null);
   lote = signal<LoteDetailView | null>(null);
 
+  resultadoCss(r: string): string {
+  const map: Record<string, string> = {
+    aprovado: 'badge-aprovado',
+    aprovado_com_restricao: 'badge-aprovado-com-restricao',
+    aprovado_restricao: 'badge-aprovado-com-restricao',
+    reprovado: 'badge-reprovado',
+  };
+  return map[r] ?? 'badge';
+}
+
   async ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
 

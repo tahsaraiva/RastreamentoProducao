@@ -57,6 +57,7 @@ const TURNO_LABELS_LOCAL: Record<string, string> = {
   selector: 'app-lote-list',
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule],
+  templateUrl: './lote-list.component.html',  
   template: `
     <section class="space-y-6">
       <div class="flex items-center justify-between">

@@ -1,96 +1,165 @@
-<section class="space-y-6">
-    <div class="flex items-center justify-between">
-        <div>
-        <h1 class="text-2xl font-bold text-white">Dashboard</h1>
-        <p class="text-sm text-slate-400">
-            Visão geral da produção em tempo real
-        </p>
+<section class="space-y-6 animate-slide-up">
+  <div class="flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-text-primary">Dashboard de Produção</h1>
+      <p class="text-sm text-text-muted mt-1">Visão geral da sua produção — Iandê Trace</p>
+    </div>
+    <p class="text-sm font-mono" style="color:#94A3B8;">{{ now | date:'dd/MM/yyyy HH:mm' }}</p>
+  </div>
+
+  @if (loading()) {
+    <div class="glass-card rounded-2xl p-6 text-text-muted">Carregando dashboard...</div>
+  }
+
+  @if (error()) {
+    <div class="rounded-2xl p-4 text-sm" style="background:rgba(198,40,40,0.1); border:1px solid rgba(198,40,40,0.3); color:#EF9A9A;">
+      {{ error() }}
+    </div>
+  }
+
+  <!-- Metric cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+    <div class="stat-card">
+      <div class="flex justify-between items-start">
+        <p class="text-text-muted text-sm">Lotes Hoje</p>
+        <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background:rgba(0,180,216,0.2);">
+          <svg class="w-5 h-5" style="color:#00B4D8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+          </svg>
         </div>
+      </div>
+      <p class="text-3xl font-bold text-text-primary">{{ metrics().lotesHoje }}</p>
+      <p class="text-xs text-text-muted">lotes abertos hoje</p>
     </div>
 
-    @if (loading()) {
-        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-slate-300">
-        Carregando dashboard...
+    <div class="stat-card">
+      <div class="flex justify-between items-start">
+        <p class="text-text-muted text-sm">Unidades Hoje</p>
+        <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background:rgba(46,125,50,0.2);">
+          <svg class="w-5 h-5" style="color:#66BB6A" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+          </svg>
         </div>
-    }
-
-    @if (error()) {
-        <div class="rounded-2xl border border-red-900 bg-red-950/40 p-4 text-red-300">
-        {{ error() }}
-        </div>
-    }
-
-    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-        <p class="text-sm text-slate-400">Lotes Hoje</p>
-        <h2 class="mt-2 text-3xl font-bold text-white">
-            {{ metrics().lotesHoje }}
-        </h2>
-        </div>
-
-        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-        <p class="text-sm text-slate-400">Unidades Hoje</p>
-        <h2 class="mt-2 text-3xl font-bold text-white">
-            {{ metrics().unidadesHoje }}
-        </h2>
-        </div>
-
-        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-        <p class="text-sm text-slate-400">Taxa Aprovação</p>
-        <h2 class="mt-2 text-3xl font-bold text-white">
-            {{ metrics().taxaAprovacao }}%
-        </h2>
-        </div>
-
-        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-        <p class="text-sm text-slate-400">Aguardando Inspeção</p>
-        <h2 class="mt-2 text-3xl font-bold text-white">
-            {{ metrics().aguardandoInspecao }}
-        </h2>
-        </div>
+      </div>
+      <p class="text-3xl font-bold text-text-primary">{{ metrics().unidadesHoje }}</p>
+      <p class="text-xs text-text-muted">unidades produzidas</p>
     </div>
 
-    <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-        <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-white">
-            Últimos lotes
-        </h2>
+    <div class="stat-card">
+      <div class="flex justify-between items-start">
+        <p class="text-text-muted text-sm">Taxa Aprovação</p>
+        <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background:rgba(26,95,122,0.2);">
+          <svg class="w-5 h-5" style="color:#2D8FAD" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
         </div>
+      </div>
+      <p class="text-3xl font-bold text-text-primary">{{ metrics().taxaAprovacao }}%</p>
+      <div class="w-full rounded-full h-1.5 mt-1" style="background:#334155;">
+        <div class="h-1.5 rounded-full transition-all duration-700"
+             style="background:linear-gradient(135deg,#00B4D8,#1A5F7A);"
+             [style.width.%]="metrics().taxaAprovacao"></div>
+      </div>
+    </div>
 
-        <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-slate-800">
-            <thead>
-            <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
-                <th class="py-3 pr-4">Lote</th>
-                <th class="py-3 pr-4">Produto</th>
-                <th class="py-3 pr-4">Operador</th>
-                <th class="py-3 pr-4">Data</th>
-                <th class="py-3 pr-4">Status</th>
+    <div class="stat-card">
+      <div class="flex justify-between items-start">
+        <p class="text-text-muted text-sm">Aguardando Inspeção</p>
+        <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background:rgba(245,124,0,0.2);">
+          <svg class="w-5 h-5" style="color:#F57C00" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+      </div>
+      <p class="text-3xl font-bold text-text-primary">{{ metrics().aguardandoInspecao }}</p>
+      <a routerLink="/app/lotes" class="text-xs" style="color:#00B4D8;">Ver pendentes →</a>
+    </div>
+  </div>
+
+  <!-- Charts row -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="glass-card rounded-2xl p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-semibold text-text-primary flex items-center gap-2">
+          <svg class="w-5 h-5" style="color:#00B4D8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+          Produção por Dia
+        </h2>
+        <span class="text-xs text-text-muted">Última semana</span>
+      </div>
+      <div style="position:relative; height:260px;">
+        <canvas #barChart></canvas>
+      </div>
+    </div>
+
+    <div class="glass-card rounded-2xl p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-semibold text-text-primary flex items-center gap-2">
+          <svg class="w-5 h-5" style="color:#00B4D8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/>
+          </svg>
+          Status dos Lotes
+        </h2>
+        <span class="text-xs text-text-muted">Distribuição atual</span>
+      </div>
+      <div style="position:relative; height:260px;">
+        <canvas #doughnutChart></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Line chart -->
+  <div class="glass-card rounded-2xl p-5">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-semibold text-text-primary flex items-center gap-2">
+        <svg class="w-5 h-5" style="color:#00B4D8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+        </svg>
+        Evolução da Taxa de Aprovação
+      </h2>
+      <span class="text-xs text-text-muted">Últimos 6 meses</span>
+    </div>
+    <div style="position:relative; height:260px;">
+      <canvas #lineChart></canvas>
+    </div>
+  </div>
+
+  <!-- Recent lots -->
+  <div class="glass-card rounded-2xl overflow-hidden">
+    <div class="flex items-center justify-between p-5 border-b border-dark-border">
+      <h2 class="font-semibold text-text-primary">📋 Últimos Lotes Registrados</h2>
+      <a routerLink="/app/lotes" class="text-sm" style="color:#00B4D8;">Ver todos →</a>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="table-base">
+        <thead>
+          <tr>
+            <th>Nº do Lote</th>
+            <th>Produto</th>
+            <th>Operador</th>
+            <th>Data</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (lote of lotesRecentes(); track lote.id) {
+            <tr>
+              <td><span class="font-mono text-xs" style="color:#00B4D8;">{{ lote.numero }}</span></td>
+              <td>
+                <p class="text-sm font-medium text-text-primary">{{ lote.produto.nome }}</p>
+                <p class="text-xs text-text-muted">{{ lote.produto.codigo }}</p>
+              </td>
+              <td class="text-sm text-text-secondary">{{ lote.operador }}</td>
+              <td class="text-sm text-text-muted">{{ lote.dataProd | date:'dd/MM/yyyy' }}</td>
+              <td><span class="badge" [ngClass]="getStatusCss(lote.status)">{{ getStatusLabel(lote.status) }}</span></td>
             </tr>
-            </thead>
-
-            <tbody class="divide-y divide-slate-800 text-sm text-slate-300">
-            @for (lote of lotesRecentes(); track lote.id) {
-                <tr>
-                <td class="py-4 pr-4 font-medium text-white">
-                    {{ lote.numero }}
-                </td>
-                <td class="py-4 pr-4">
-                    {{ lote.produto.nome }}
-                </td>
-                <td class="py-4 pr-4">
-                    {{ lote.operador }}
-                </td>
-                <td class="py-4 pr-4">
-                    {{ lote.dataProd | date: 'dd/MM/yyyy' }}
-                </td>
-                <td class="py-4 pr-4">
-                    {{ lote.status }}
-                </td>
-                </tr>
-            }
-            </tbody>
-        </table>
-        </div>
+          }
+        </tbody>
+      </table>
     </div>
+  </div>
 </section>

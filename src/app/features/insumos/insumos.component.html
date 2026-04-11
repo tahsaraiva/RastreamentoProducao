@@ -1,188 +1,150 @@
-<section class="space-y-6">
+<section class="space-y-6 animate-slide-up max-w-4xl">
   @if (loading()) {
-    <div class="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-slate-300">
-      Carregando insumos...
-    </div>
+    <div class="glass-card rounded-2xl p-6 text-text-muted">Carregando insumos...</div>
   }
 
   @if (error()) {
-    <div class="rounded-2xl border border-red-900 bg-red-950/40 p-4 text-red-300">
+    <div class="rounded-2xl p-4 text-sm" style="background:rgba(198,40,40,0.1); border:1px solid rgba(198,40,40,0.3); color:#EF9A9A;">
       {{ error() }}
     </div>
   }
 
   @if (success()) {
-    <div class="rounded-2xl border border-emerald-900 bg-emerald-950/40 p-4 text-emerald-300">
+    <div class="rounded-2xl p-4 text-sm" style="background:rgba(46,125,50,0.1); border:1px solid rgba(46,125,50,0.3); color:#66BB6A;">
       {{ success() }}
     </div>
   }
 
   @if (lote(); as loteAtual) {
-    <div class="flex items-start justify-between gap-4">
+    <div class="flex items-start justify-between gap-4 flex-wrap">
       <div>
-        <p class="text-sm text-slate-400">Insumos do lote</p>
-        <h1 class="mt-1 text-2xl font-bold text-white font-mono">
-          {{ loteAtual.numero }}
-        </h1>
-        <p class="mt-1 text-sm text-slate-400">
-          {{ loteAtual.produtoNome }} • {{ loteAtual.linha }}
-        </p>
+        <p class="text-sm text-text-muted">Insumos do lote</p>
+        <h1 class="mt-1 text-2xl font-bold text-text-primary font-mono">{{ loteAtual.numero }}</h1>
+        <p class="mt-1 text-sm text-text-muted">{{ loteAtual.produtoNome }} • {{ loteAtual.linha }}</p>
       </div>
-
-      <div class="flex gap-2">
-        <a
-          [routerLink]="['/app/lotes', loteAtual.id]"
-          class="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
-        >
-          Voltar ao lote
-        </a>
-      </div>
+      <a [routerLink]="['/app/lotes', loteAtual.id]" class="btn-secondary text-sm px-4 py-2">
+        Voltar ao lote
+      </a>
     </div>
 
     @if (!canEdit) {
-      <div class="rounded-2xl border border-amber-900 bg-amber-950/40 p-4 text-amber-300">
-        Este lote não está em produção. Os insumos ficam somente para consulta.
+      <div class="rounded-2xl p-4 text-sm flex items-center gap-3"
+           style="background:rgba(249,168,37,0.1); border:1px solid rgba(249,168,37,0.3); color:#FFD54F;">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        Este lote não está em produção. Os insumos não podem ser alterados.
       </div>
     }
 
-    <div class="grid gap-6 lg:grid-cols-3">
-      <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5 lg:col-span-2">
-        <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-white">Insumos vinculados</h2>
-          <span class="text-sm text-slate-400">
-            {{ insumos().length }} item(ns)
-          </span>
-        </div>
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div class="lg:col-span-3">
+        <div class="glass-card rounded-2xl p-5">
+          <h2 class="section-title">
+            Insumos vinculados
+            <span class="text-text-muted font-normal text-sm">({{ insumos().length }})</span>
+          </h2>
 
-        @if (insumos().length === 0) {
-          <div class="rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">
-            Nenhum insumo vinculado a este lote.
-          </div>
-        } @else {
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-800">
-              <thead>
-                <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
-                  <th class="py-3 pr-4">Insumo</th>
-                  <th class="py-3 pr-4">Código</th>
-                  <th class="py-3 pr-4">Lote do insumo</th>
-                  <th class="py-3 pr-4">Quantidade</th>
-                  <th class="py-3 pr-4">Unidade</th>
-                  <th class="py-3 pr-4">Ações</th>
-                </tr>
-              </thead>
-
-              <tbody class="divide-y divide-slate-800 text-sm text-slate-300">
-                @for (ins of insumos(); track ins.id) {
-                  <tr>
-                    <td class="py-4 pr-4 font-medium text-white">{{ ins.nome }}</td>
-                    <td class="py-4 pr-4">{{ ins.codigo || '—' }}</td>
-                    <td class="py-4 pr-4">{{ ins.loteInsumo || '—' }}</td>
-                    <td class="py-4 pr-4">{{ ins.quantidade }}</td>
-                    <td class="py-4 pr-4">{{ ins.unidade }}</td>
-                    <td class="py-4 pr-4">
-                      @if (canEdit) {
-                        <button
-                          type="button"
-                          (click)="removerInsumo(ins.id)"
-                          [disabled]="removingId() === ins.id"
-                          class="text-xs font-medium text-red-400 hover:text-red-300 disabled:opacity-50"
-                        >
-                          {{ removingId() === ins.id ? 'Removendo...' : 'Remover' }}
-                        </button>
-                      } @else {
-                        <span class="text-xs text-slate-500">Somente leitura</span>
+          @if (insumos().length === 0) {
+            <div class="text-center py-10 text-text-muted">
+              <svg class="w-10 h-10 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+              </svg>
+              <p class="text-sm">Nenhum insumo vinculado ainda.</p>
+            </div>
+          } @else {
+            <div class="space-y-2">
+              @for (ins of insumos(); track ins.id) {
+                <div class="flex items-start gap-3 p-3 rounded-xl group"
+                     style="background:rgba(51,65,85,0.4); border:1px solid #334155;">
+                  <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-mono font-bold mt-0.5"
+                       style="background:#334155; color:#94A3B8;">
+                    {{ $index + 1 }}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-text-primary">{{ ins.nome }}</p>
+                    <p class="text-xs text-text-muted">{{ ins.codigo || '—' }}</p>
+                    <div class="flex items-center gap-3 mt-1.5 flex-wrap">
+                      @if (ins.loteInsumo) {
+                        <span class="text-xs px-2 py-0.5 rounded font-mono"
+                              style="background:#334155; color:#CBD5E1;">
+                          Lote: {{ ins.loteInsumo }}
+                        </span>
                       }
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        }
-      </div>
-
-      <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-        <h2 class="mb-4 text-lg font-semibold text-white">Adicionar insumo</h2>
-
-        <div class="space-y-4">
-          <div>
-            <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
-              Nome do insumo
-            </label>
-            <input
-              [(ngModel)]="form.nomeInsumo"
-              [disabled]="!canEdit"
-              type="text"
-              class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
-              placeholder="Ex: Resina Epóxi"
-            />
-          </div>
-
-          <div>
-            <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
-              Código do insumo
-            </label>
-            <input
-              [(ngModel)]="form.codigoInsumo"
-              [disabled]="!canEdit"
-              type="text"
-              class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
-              placeholder="Ex: INS-001"
-            />
-          </div>
-
-          <div>
-            <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
-              Lote do insumo
-            </label>
-            <input
-              [(ngModel)]="form.loteInsumo"
-              [disabled]="!canEdit"
-              type="text"
-              class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
-              placeholder="Ex: MAT-2026-0091"
-            />
-          </div>
-
-          <div>
-            <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
-              Quantidade
-            </label>
-            <input
-              [(ngModel)]="form.quantidade"
-              [disabled]="!canEdit"
-              type="number"
-              min="0"
-              step="0.01"
-              class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
-              placeholder="Ex: 12.5"
-            />
-          </div>
-
-          <div>
-            <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
-              Unidade
-            </label>
-            <input
-              [(ngModel)]="form.unidade"
-              [disabled]="!canEdit"
-              type="text"
-              class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
-              placeholder="Ex: kg"
-            />
-          </div>
-
-          <button
-            type="button"
-            (click)="adicionarInsumo()"
-            [disabled]="saving() || !canEdit"
-            class="w-full rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-50"
-          >
-            {{ saving() ? 'Salvando...' : 'Adicionar insumo' }}
-          </button>
+                      <span class="text-xs font-mono" style="color:#94A3B8;">
+                        {{ ins.quantidade }} {{ ins.unidade }}
+                      </span>
+                    </div>
+                  </div>
+                  @if (canEdit) {
+                    <button (click)="removerInsumo(ins.id)"
+                      [disabled]="removingId() === ins.id"
+                      class="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded"
+                      style="color:#64748b;"
+                      onmouseover="this.style.color='#EF9A9A'"
+                      onmouseout="this.style.color='#64748b'">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          }
         </div>
       </div>
+
+      @if (canEdit) {
+        <div class="lg:col-span-2">
+          <div class="glass-card rounded-2xl p-5 sticky top-4">
+            <h2 class="section-title">Adicionar insumo</h2>
+            <div class="space-y-4">
+              <div>
+                <label class="form-label">Nome do insumo <span style="color:#EF9A9A;">*</span></label>
+                <input [(ngModel)]="form.nomeInsumo" type="text" class="input-field"
+                       placeholder="Ex: Ibuprofeno PA" />
+              </div>
+              <div>
+                <label class="form-label">Código do insumo</label>
+                <input [(ngModel)]="form.codigoInsumo" type="text" class="input-field"
+                       placeholder="Ex: INS-IBU-01" />
+              </div>
+              <div>
+                <label class="form-label">Lote do insumo</label>
+                <input [(ngModel)]="form.loteInsumo" type="text" class="input-field font-mono"
+                       placeholder="Ex: FRN-2024-1103" />
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="form-label">Quantidade <span style="color:#EF9A9A;">*</span></label>
+                  <input [(ngModel)]="form.quantidade" type="number" min="0.001" step="0.001"
+                         class="input-field" placeholder="0" />
+                </div>
+                <div>
+                  <label class="form-label">Unidade <span style="color:#EF9A9A;">*</span></label>
+                  <input [(ngModel)]="form.unidade" type="text" class="input-field" placeholder="kg, L..." />
+                </div>
+              </div>
+              <button type="button" (click)="adicionarInsumo()" [disabled]="saving()"
+                class="btn-primary w-full justify-center py-2.5">
+                @if (saving()) {
+                  <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                  </svg>
+                  Adicionando...
+                } @else {
+                  Vincular insumo
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   }
 </section>

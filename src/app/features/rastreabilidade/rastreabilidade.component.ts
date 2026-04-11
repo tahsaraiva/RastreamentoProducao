@@ -252,10 +252,39 @@ export class RastreabilidadeComponent implements OnInit {
     };
   }
 
-  getStatusLabel(status: string) {
-    return STATUS_LABELS_LOCAL[status] ?? status;
-  }
+  getStatusLabel(s: string): string {
+  const map: Record<string, string> = {
+    em_producao: 'Em produção',
+    aguardando_inspecao: 'Aguardando inspeção',
+    aprovado: 'Aprovado',
+    aprovado_com_restricao: 'Aprovado c/ restrição',
+    aprovado_restricao: 'Aprovado c/ restrição',
+    reprovado: 'Reprovado',
+  };
+  return map[s] ?? s;
+}
 
+getStatusCss(s: string): string {
+  const map: Record<string, string> = {
+    em_producao: 'badge-em-producao',
+    aguardando_inspecao: 'badge-aguardando-inspecao',
+    aprovado: 'badge-aprovado',
+    aprovado_com_restricao: 'badge-aprovado-com-restricao',
+    aprovado_restricao: 'badge-aprovado-com-restricao',
+    reprovado: 'badge-reprovado',
+  };
+  return map[s] ?? 'badge';
+}
+
+resultadoCss(r: string): string {
+  const map: Record<string, string> = {
+    aprovado: 'badge-aprovado',
+    aprovado_com_restricao: 'badge-aprovado-com-restricao',
+    aprovado_restricao: 'badge-aprovado-com-restricao',
+    reprovado: 'badge-reprovado',
+  };
+  return map[r] ?? 'badge';
+}
   turnoLabel(turno: string) {
     return TURNO_LABELS_LOCAL[turno] ?? turno;
   }

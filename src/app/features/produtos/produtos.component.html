@@ -1,160 +1,105 @@
-<section class="space-y-6">
-  <div class="flex items-start justify-between gap-4">
+<section class="space-y-6 animate-slide-up">
+  <div class="flex items-start justify-between gap-4 flex-wrap">
     <div>
-      <p class="text-sm text-slate-400">Gestão de produtos</p>
-      <h1 class="mt-1 text-2xl font-bold text-white">Produtos</h1>
+      <p class="text-sm text-text-muted">Gestão de produtos</p>
+      <h1 class="mt-1 text-2xl font-bold text-text-primary">Produtos</h1>
     </div>
-
-    <button
-      type="button"
-      (click)="novoProduto()"
-      class="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
-    >
-      Novo produto
+    <button type="button" (click)="novoProduto()" class="btn-secondary text-sm px-4 py-2">
+      + Novo produto
     </button>
   </div>
 
   @if (error()) {
-    <div class="rounded-2xl border border-red-900 bg-red-950/40 p-4 text-red-300">
+    <div class="rounded-2xl p-4 text-sm" style="background:rgba(198,40,40,0.1); border:1px solid rgba(198,40,40,0.3); color:#EF9A9A;">
       {{ error() }}
     </div>
   }
 
   @if (success()) {
-    <div class="rounded-2xl border border-emerald-900 bg-emerald-950/40 p-4 text-emerald-300">
+    <div class="rounded-2xl p-4 text-sm" style="background:rgba(46,125,50,0.1); border:1px solid rgba(46,125,50,0.3); color:#66BB6A;">
       {{ success() }}
     </div>
   }
 
   <div class="grid gap-6 lg:grid-cols-3">
-    <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5 lg:col-span-1">
-      <h2 class="mb-4 text-lg font-semibold text-white">
-        {{ editandoId() ? 'Editar produto' : 'Novo produto' }}
-      </h2>
-
+    <div class="glass-card rounded-2xl p-5 lg:col-span-1">
+      <h2 class="section-title">{{ editandoId() ? 'Editar produto' : 'Novo produto' }}</h2>
       <div class="space-y-4">
         <div>
-          <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
-            Código
-          </label>
-          <input
-            [(ngModel)]="form.codigo"
-            [disabled]="saving()"
-            type="text"
-            class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
-            placeholder="Ex: PRD-001"
-          />
+          <label class="form-label">Código</label>
+          <input [(ngModel)]="form.codigo" [disabled]="saving()" type="text"
+                 class="input-field" placeholder="Ex: PRD-001" />
         </div>
-
         <div>
-          <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
-            Nome
-          </label>
-          <input
-            [(ngModel)]="form.nome"
-            [disabled]="saving()"
-            type="text"
-            class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
-            placeholder="Ex: Placa Eletrônica A"
-          />
+          <label class="form-label">Nome</label>
+          <input [(ngModel)]="form.nome" [disabled]="saving()" type="text"
+                 class="input-field" placeholder="Ex: Placa Eletrônica A" />
         </div>
-
         <div>
-          <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
-            Linha
-          </label>
-          <input
-            [(ngModel)]="form.linha"
-            [disabled]="saving()"
-            type="text"
-            class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
-            placeholder="Ex: Linha SMT 01"
-          />
+          <label class="form-label">Linha</label>
+          <input [(ngModel)]="form.linha" [disabled]="saving()" type="text"
+                 class="input-field" placeholder="Ex: Linha SMT 01" />
         </div>
-
         <div>
-          <label class="mb-2 block text-xs uppercase tracking-wide text-slate-500">
-            Descrição
-          </label>
-          <textarea
-            [(ngModel)]="form.descricao"
-            [disabled]="saving()"
-            rows="4"
-            class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none disabled:opacity-50"
-            placeholder="Descrição opcional"
-          ></textarea>
+          <label class="form-label">Descrição</label>
+          <textarea [(ngModel)]="form.descricao" [disabled]="saving()" rows="4"
+                    class="input-field resize-none" placeholder="Descrição opcional"></textarea>
         </div>
-
-        <button
-          type="button"
-          (click)="salvar()"
-          [disabled]="saving()"
-          class="w-full rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-50"
-        >
-          {{ saving() ? 'Salvando...' : (editandoId() ? 'Atualizar produto' : 'Criar produto') }}
+        <button type="button" (click)="salvar()" [disabled]="saving()" class="btn-primary w-full justify-center py-2.5">
+          @if (saving()) {
+            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            Salvando...
+          } @else {
+            {{ editandoId() ? 'Atualizar produto' : 'Criar produto' }}
+          }
         </button>
       </div>
     </div>
 
-    <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5 lg:col-span-2">
-      <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-white">Produtos cadastrados</h2>
-        <span class="text-sm text-slate-400">{{ produtos().length }} item(ns)</span>
+    <div class="glass-card rounded-2xl p-5 lg:col-span-2">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="section-title mb-0">Produtos cadastrados</h2>
+        <span class="text-sm text-text-muted">{{ produtos().length }} item(ns)</span>
       </div>
 
       @if (loading()) {
-        <div class="rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">
+        <div class="rounded-xl p-4 text-sm text-text-muted" style="background:#0F172A; border:1px solid #334155;">
           Carregando produtos...
         </div>
       } @else if (produtos().length === 0) {
-        <div class="rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-400">
+        <div class="rounded-xl p-4 text-sm text-text-muted" style="background:#0F172A; border:1px solid #334155;">
           Nenhum produto cadastrado.
         </div>
       } @else {
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-slate-800">
+        <div class="table-container" style="border-color:#334155;">
+          <table class="table-base">
             <thead>
-              <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
-                <th class="py-3 pr-4">Código</th>
-                <th class="py-3 pr-4">Nome</th>
-                <th class="py-3 pr-4">Linha</th>
-                <th class="py-3 pr-4">Status</th>
-                <th class="py-3 pr-4">Ações</th>
-              </tr>
+              <tr><th>Código</th><th>Nome</th><th>Linha</th><th>Status</th><th>Ações</th></tr>
             </thead>
-
-            <tbody class="divide-y divide-slate-800 text-sm text-slate-300">
+            <tbody>
               @for (produto of produtos(); track produto.id) {
                 <tr>
-                  <td class="py-4 pr-4 font-medium text-white">{{ produto.codigo }}</td>
-                  <td class="py-4 pr-4">{{ produto.nome }}</td>
-                  <td class="py-4 pr-4">{{ produto.linha }}</td>
-                  <td class="py-4 pr-4">
+                  <td class="font-mono font-medium text-text-primary">{{ produto.codigo }}</td>
+                  <td>{{ produto.nome }}</td>
+                  <td>{{ produto.linha }}</td>
+                  <td>
                     @if (produto.ativo) {
-                      <span class="rounded-full bg-emerald-950 px-2 py-1 text-xs text-emerald-300">
-                        Ativo
-                      </span>
+                      <span class="badge badge-aprovado">Ativo</span>
                     } @else {
-                      <span class="rounded-full bg-red-950 px-2 py-1 text-xs text-red-300">
-                        Inativo
-                      </span>
+                      <span class="badge badge-reprovado">Inativo</span>
                     }
                   </td>
-                  <td class="py-4 pr-4">
+                  <td>
                     <div class="flex gap-3">
-                      <button
-                        type="button"
-                        (click)="editarProduto(produto)"
-                        class="text-xs font-medium text-cyan-400 hover:text-cyan-300"
-                      >
+                      <button type="button" (click)="editarProduto(produto)"
+                        class="text-xs font-medium transition-colors" style="color:#00B4D8;">
                         Editar
                       </button>
-
-                      <button
-                        type="button"
-                        (click)="toggleAtivo(produto)"
-                        class="text-xs font-medium text-amber-400 hover:text-amber-300"
-                      >
+                      <button type="button" (click)="toggleAtivo(produto)"
+                        class="text-xs font-medium transition-colors" style="color:#F9A825;">
                         {{ produto.ativo ? 'Inativar' : 'Reativar' }}
                       </button>
                     </div>

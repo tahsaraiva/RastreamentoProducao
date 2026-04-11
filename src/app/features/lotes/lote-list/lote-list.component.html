@@ -1,0 +1,175 @@
+<section class="space-y-6 animate-slide-up">
+
+  <!-- Header -->
+  <div class="flex items-start justify-between flex-wrap gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-text-primary">Lotes de Produção</h1>
+      <p class="text-sm text-text-muted mt-1">{{ filtered().length }} lote(s) encontrado(s)</p>
+    </div>
+    <a routerLink="/app/lotes/novo" class="btn-primary px-5 py-2">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Abrir novo lote
+    </a>
+  </div>
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="glass-card rounded-2xl p-6 text-text-muted">Carregando lotes...</div>
+  }
+
+  <!-- Error -->
+  @if (error()) {
+    <div class="rounded-2xl p-4 text-sm"
+         style="background:rgba(198,40,40,0.1); border:1px solid rgba(198,40,40,0.3); color:#EF9A9A;">
+      {{ error() }}
+    </div>
+  }
+
+  <!-- Filters -->
+  <div class="glass-card rounded-2xl p-5">
+    <div class="grid gap-4 md:grid-cols-4">
+
+      <div>
+        <label class="form-label">Buscar por número</label>
+        <div class="relative">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style="color:#94A3B8;"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()"
+                 type="text" placeholder="Ex: LOT-2026-00001"
+                 class="input-field pl-9" />
+        </div>
+      </div>
+
+      <div>
+        <label class="form-label">Produto</label>
+        <select [(ngModel)]="filterProduto" (ngModelChange)="applyFilters()" class="input-field">
+          <option value="">Todos os produtos</option>
+          @for (p of produtos(); track p.id) {
+            <option [value]="p.id">{{ p.nome }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="form-label">Status</label>
+        <select [(ngModel)]="filterStatus" (ngModelChange)="applyFilters()" class="input-field">
+          <option value="">Todos os status</option>
+          @for (s of statusOptions; track s.value) {
+            <option [value]="s.value">{{ s.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="flex items-end">
+        <button type="button" (click)="clearFilters()" class="btn-secondary w-full justify-center py-2.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          Limpar filtros
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="glass-card rounded-2xl overflow-hidden p-0">
+    @if (filtered().length === 0 && !loading()) {
+      <div class="text-center py-16 text-text-muted">
+        <svg class="w-12 h-12 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+        </svg>
+        <p class="text-sm">Nenhum lote encontrado com os filtros selecionados.</p>
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="table-base">
+          <thead>
+            <tr>
+              <th>Nº do Lote</th>
+              <th>Produto</th>
+              <th>Turno / Operador</th>
+              <th>Qtd. Produzida</th>
+              <th>Data Produção</th>
+              <th>Status</th>
+              <th class="text-right pr-5">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (lote of filtered(); track lote.id) {
+              <tr>
+                <td>
+                  <span class="font-mono text-xs font-medium" style="color:#00B4D8;">
+                    {{ lote.numero }}
+                  </span>
+                </td>
+
+                <td>
+                  <p class="text-sm font-medium text-text-primary">{{ lote.produto?.nome }}</p>
+                  <p class="text-xs text-text-muted">{{ lote.produto?.codigo }}</p>
+                </td>
+
+                <td>
+                  <p class="text-sm text-text-secondary">{{ lote.operador }}</p>
+                  <p class="text-xs text-text-muted">{{ turnoLabel(lote.turno) }}</p>
+                </td>
+
+                <td>
+                  <span class="font-mono text-sm text-text-secondary">
+                    {{ lote.qtdProduzida | number:'1.0-0' }}
+                  </span>
+                  <span class="text-xs text-text-muted ml-1">{{ lote.produto?.unidade }}</span>
+                </td>
+
+                <td class="text-sm text-text-muted">
+                  {{ lote.dataProd | date:'dd/MM/yyyy' }}
+                </td>
+
+                <td>
+                  <span class="badge" [ngClass]="getStatusCss(lote.status)">
+                    {{ getStatusLabel(lote.status) }}
+                  </span>
+                </td>
+
+                <td class="text-right">
+                  <div class="flex items-center justify-end gap-2 pr-2">
+                    @if (lote.status === 'em_producao') {
+                      <a [routerLink]="['/app/lotes', lote.id, 'insumos']"
+                         class="text-xs font-medium px-2 py-1 rounded transition-all"
+                         style="color:#00B4D8;"
+                         onmouseover="this.style.background='rgba(0,180,216,0.1)'"
+                         onmouseout="this.style.background='transparent'">
+                        Insumos
+                      </a>
+                    }
+
+                    @if (lote.status === 'aguardando_inspecao') {
+                      <a [routerLink]="['/app/lotes', lote.id, 'inspecao']"
+                         class="text-xs font-medium px-2 py-1 rounded transition-all"
+                         style="color:#FFD54F;"
+                         onmouseover="this.style.background='rgba(249,168,37,0.1)'"
+                         onmouseout="this.style.background='transparent'">
+                        Inspecionar
+                      </a>
+                    }
+
+                    <a [routerLink]="['/app/lotes', lote.id]"
+                       class="btn-secondary text-xs px-3 py-1.5">
+                      Detalhes
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+</section>
