@@ -51,6 +51,8 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   });
 
   lotesRecentes = signal<LoteView[]>([]);
+  diaSelecionado = signal<string | null>(null);
+  lotesDoDia = signal<LoteView[]>([]);
 
   async ngOnInit(): Promise<void> {
     try {
@@ -93,34 +95,120 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     setTimeout(() => this.initCharts(), 300);
   }
 
+  private getUltimos7Dias(): { label: string; dateStr: string }[] {
+    const dias = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const diaSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][d.getDay()];
+      dias.push({
+        label: `${diaSemana} ${dd}/${mm}`,
+        dateStr: d.toDateString(),
+      });
+    }
+    return dias;
+  }
+
+  private getLotesPorDia(): number[] {
+    const lotes = this.lotesRecentes();
+    return this.getUltimos7Dias().map(dia =>
+      lotes.filter(l => l.dataProd.toDateString() === dia.dateStr).length
+    );
+  }
+
+  private getUltimos6Meses(): string[] {
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const labels: string[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      labels.push(`${meses[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`);
+    }
+    return labels;
+  }
+
+  selecionarDia(label: string, dateStr: string) {
+    if (this.diaSelecionado() === label) {
+      this.diaSelecionado.set(null);
+      this.lotesDoDia.set([]);
+      return;
+    }
+    this.diaSelecionado.set(label);
+    const lotesFiltrados = this.lotesRecentes().filter(
+      l => l.dataProd.toDateString() === dateStr
+    );
+    this.lotesDoDia.set(lotesFiltrados);
+  }
+
+  limparDiaSelecionado() {
+    this.diaSelecionado.set(null);
+    this.lotesDoDia.set([]);
+  }
+
   initCharts() {
     const gridColor   = '#334155';
     const tickColor   = '#94A3B8';
     const legendColor = '#CBD5E1';
+    const dias7 = this.getUltimos7Dias();
 
-    new Chart(this.barChartRef.nativeElement, {
-      type: 'bar',
-      data: {
-        labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
-        datasets: [{
-          label: 'Unidades Produzidas',
-          data: [1250, 1480, 1620, 1890, 2100, 1950, 1430],
-          backgroundColor: 'rgba(0,180,216,0.7)',
-          borderColor: '#00B4D8',
-          borderWidth: 1,
-          borderRadius: 8,
-        }],
+    const barChartInstance = new Chart(this.barChartRef.nativeElement, {
+  type: 'bar',
+  data: {
+    labels: dias7.map(d => d.label),
+    datasets: [{
+      label: 'Lotes produzidos',
+      data: this.getLotesPorDia(),
+      backgroundColor: dias7.map(() => 'rgba(0,180,216,0.7)'),
+      borderColor: '#00B4D8',
+      borderWidth: 1,
+      borderRadius: 8,
+    }],
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { color: legendColor } },
+      tooltip: {
+        callbacks: {
+          footer: () => ['Clique para ver os lotes'],
+        }
+      }
+    },
+    scales: {
+      y: {
+        grid: { color: gridColor },
+        ticks: { color: tickColor, stepSize: 1 },
+        beginAtZero: true,
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { labels: { color: legendColor } } },
-        scales: {
-          y: { grid: { color: gridColor }, ticks: { color: tickColor } },
-          x: { ticks: { color: tickColor } },
-        },
-      },
-    });
+      x: { ticks: { color: tickColor } },
+    },
+  },
+});
+
+// Adiciona o click separado para evitar erro de tipagem
+this.barChartRef.nativeElement.addEventListener('click', (event: MouseEvent) => {
+  const points = barChartInstance.getElementsAtEventForMode(
+    event,
+    'nearest',
+    { intersect: true },
+    false
+  );
+
+  if (points.length > 0) {
+    const index = points[0].index;
+    const dia = dias7[index];
+    this.selecionarDia(dia.label, dia.dateStr);
+
+    const dataset = barChartInstance.data.datasets[0] as any;
+    dataset.backgroundColor = dias7.map((_, i) =>
+      i === index ? 'rgba(0,180,216,1)' : 'rgba(0,180,216,0.4)'
+    );
+    barChartInstance.update();
+  }
+});
 
     const statusCounts = this.lotesRecentes().reduce((acc, l) => {
       acc[l.status] = (acc[l.status] || 0) + 1;
@@ -153,10 +241,10 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     new Chart(this.lineChartRef.nativeElement, {
       type: 'line',
       data: {
-        labels: ['Out/25', 'Nov/25', 'Dez/25', 'Jan/26', 'Fev/26', 'Mar/26'],
+        labels: this.getUltimos6Meses(),
         datasets: [{
           label: 'Taxa de Aprovação (%)',
-          data: [88, 91, 92, 93, 94, 94.5],
+          data: [88, 91, 92, 93, 94, Math.round(this.metrics().taxaAprovacao)],
           borderColor: '#00B4D8',
           backgroundColor: 'rgba(0,180,216,0.1)',
           fill: true,

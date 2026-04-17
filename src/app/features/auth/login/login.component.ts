@@ -140,9 +140,9 @@ export class LoginComponent {
   showPass = signal(false);
 
   demoCreds: { email: string; role: string; senha: string }[] = [
-    { email: 'gestor@lotepim.com',   role: 'Gestor',   senha: '123456' },
-    { email: 'inspetor@lotepim.com', role: 'Inspetor', senha: '123456' },
-    { email: 'operador@lotepim.com', role: 'Operador', senha: '123456' },
+    { email: 'gestor@iande.com',   role: 'Gestor',   senha: '123456' },
+    { email: 'inspetor@iande.com', role: 'Inspetor', senha: '123456' },
+    { email: 'operador@iande.com', role: 'Operador', senha: '123456' },
   ];
 
   form = this.fb.group({

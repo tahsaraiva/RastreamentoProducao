@@ -10,18 +10,19 @@
     </div>
   }
 
+  <!-- Search -->
   <div class="glass-card rounded-2xl p-5">
     <div class="grid gap-4 md:grid-cols-4">
       <div>
         <label class="form-label">Tipo de busca</label>
-        <select [ngModel]="tipoBusca()" (ngModelChange)="tipoBusca.set($event)" class="input-field">
+        <select [(ngModel)]="tipoBuscaValue" (ngModelChange)="tipoBusca.set($event)" class="input-field">
           <option value="lote">Por lote</option>
           <option value="insumo">Por insumo</option>
         </select>
       </div>
       <div class="md:col-span-2">
         <label class="form-label">Termo</label>
-        <input [ngModel]="termo()" (ngModelChange)="termo.set($event)" type="text" class="input-field"
+        <input [(ngModel)]="termoValue" (ngModelChange)="termo.set($event)" type="text" class="input-field"
                [placeholder]="tipoBusca() === 'lote' ? 'Ex: LOT-2026-00006' : 'Ex: INS-001 ou MAT-2026-0091'" />
       </div>
       <div class="flex items-end gap-2">
@@ -35,8 +36,11 @@
     </div>
   </div>
 
+  <!-- Resultado por Lote -->
   @if (resultadoLote(); as resultado) {
     <div class="grid gap-6 lg:grid-cols-3">
+
+      <!-- Dados principais -->
       <div class="glass-card rounded-2xl p-5 lg:col-span-2">
         <div class="mb-4">
           <p class="text-sm text-text-muted">Resultado por lote</p>
@@ -49,7 +53,11 @@
           </div>
           <div>
             <dt class="text-xs uppercase tracking-wide text-text-muted">Status</dt>
-            <dd class="mt-1"><span class="badge" [ngClass]="getStatusCss(resultado.status)">{{ getStatusLabel(resultado.status) }}</span></dd>
+            <dd class="mt-1">
+              <span class="badge" [ngClass]="getStatusCss(resultado.status)">
+                {{ getStatusLabel(resultado.status) }}
+              </span>
+            </dd>
           </div>
           <div>
             <dt class="text-xs uppercase tracking-wide text-text-muted">Data produção</dt>
@@ -60,8 +68,9 @@
             <dd class="mt-1 text-sm text-text-secondary">{{ turnoLabel(resultado.turno) }}</dd>
           </div>
           <div>
-            <dt class="text-xs uppercase tracking-wide text-text-muted">Operador</dt>
+            <dt class="text-xs uppercase tracking-wide text-text-muted">Operador responsável</dt>
             <dd class="mt-1 text-sm text-text-secondary">{{ resultado.operador.nome }}</dd>
+            <dd class="text-xs text-text-muted">{{ resultado.operador.email }}</dd>
           </div>
           <div>
             <dt class="text-xs uppercase tracking-wide text-text-muted">Linha</dt>
@@ -75,6 +84,18 @@
             <dt class="text-xs uppercase tracking-wide text-text-muted">Qtd. reprovada</dt>
             <dd class="mt-1 text-sm font-mono" style="color:#EF9A9A;">{{ resultado.quantidadeRepr | number:'1.0-0' }}</dd>
           </div>
+          @if (resultado.abertoEm) {
+            <div>
+              <dt class="text-xs uppercase tracking-wide text-text-muted">Aberto em</dt>
+              <dd class="mt-1 text-sm text-text-secondary">{{ resultado.abertoEm | date:'dd/MM/yyyy HH:mm' }}</dd>
+            </div>
+          }
+          @if (resultado.encerradoEm) {
+            <div>
+              <dt class="text-xs uppercase tracking-wide text-text-muted">Encerrado em</dt>
+              <dd class="mt-1 text-sm text-text-secondary">{{ resultado.encerradoEm | date:'dd/MM/yyyy HH:mm' }}</dd>
+            </div>
+          }
         </dl>
         @if (resultado.observacoes) {
           <div class="mt-4 rounded-xl p-4" style="background:#0F172A; border:1px solid #334155;">
@@ -84,8 +105,9 @@
         }
       </div>
 
+      <!-- Inspeção -->
       <div class="glass-card rounded-2xl p-5">
-        <h2 class="section-title">Inspeção</h2>
+        <h2 class="section-title">Inspeção de Qualidade</h2>
         @if (resultado.inspecao) {
           <div class="space-y-3 text-sm">
             <div>
@@ -95,16 +117,19 @@
               </span>
             </div>
             <div>
-              <p class="text-xs text-text-muted uppercase tracking-wide mb-1">Qtd. reprovada</p>
-              <p class="font-mono text-text-secondary">{{ resultado.inspecao.quantidadeRepr }}</p>
+              <p class="text-xs text-text-muted uppercase tracking-wide mb-1">Inspetor</p>
+              <p class="text-text-secondary">{{ resultado.inspecao.inspetor?.nome || '—' }}</p>
+              @if (resultado.inspecao.inspetor?.email) {
+                <p class="text-xs text-text-muted">{{ resultado.inspecao.inspetor?.email }}</p>
+              }
             </div>
             <div>
-              <p class="text-xs text-text-muted uppercase tracking-wide mb-1">Data</p>
+              <p class="text-xs text-text-muted uppercase tracking-wide mb-1">Data da inspeção</p>
               <p class="text-text-secondary">{{ resultado.inspecao.inspecionadoEm | date:'dd/MM/yyyy HH:mm' }}</p>
             </div>
             <div>
-              <p class="text-xs text-text-muted uppercase tracking-wide mb-1">Inspetor</p>
-              <p class="text-text-secondary">{{ resultado.inspecao.inspetor?.nome || '—' }}</p>
+              <p class="text-xs text-text-muted uppercase tracking-wide mb-1">Qtd. reprovada</p>
+              <p class="font-mono text-text-secondary">{{ resultado.inspecao.quantidadeRepr }}</p>
             </div>
             @if (resultado.inspecao.descricaoDesvio) {
               <div class="rounded-xl p-3" style="background:#0F172A; border:1px solid #334155;">
@@ -121,6 +146,157 @@
       </div>
     </div>
 
+    <!-- Linha do tempo -->
+    <div class="glass-card rounded-2xl p-5">
+      <h2 class="section-title flex items-center gap-2">
+        <svg class="w-5 h-5" style="color:#00B4D8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Linha do Tempo
+      </h2>
+
+      <div class="relative">
+        <div class="absolute left-5 top-0 bottom-0 w-0.5" style="background:linear-gradient(to bottom, #00B4D8, #334155);"></div>
+
+        <div class="space-y-6 pl-14">
+
+          <!-- Abertura -->
+          <div class="relative">
+            <div class="absolute -left-9 w-8 h-8 rounded-full flex items-center justify-center"
+                 style="background:rgba(0,180,216,0.2); border:2px solid #00B4D8;">
+              <svg class="w-4 h-4" style="color:#00B4D8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+            </div>
+            <div class="rounded-xl p-4" style="background:#0F172A; border:1px solid #334155;">
+              <div class="flex items-start justify-between flex-wrap gap-2">
+                <div>
+                  <p class="text-sm font-semibold text-text-primary">Lote aberto</p>
+                  <p class="text-xs text-text-muted mt-1">
+                    Operador: <span class="text-text-secondary">{{ resultado.operador.nome }}</span>
+                  </p>
+                  <p class="text-xs text-text-muted">
+                    Linha: <span class="text-text-secondary">{{ resultado.linha }}</span>
+                    · Turno: <span class="text-text-secondary">{{ turnoLabel(resultado.turno) }}</span>
+                  </p>
+                </div>
+                <span class="text-xs font-mono" style="color:#00B4D8;">
+                  {{ resultado.abertoEm ? (resultado.abertoEm | date:'dd/MM/yyyy HH:mm') : (resultado.dataProd | date:'dd/MM/yyyy') }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Insumos -->
+          @if (resultado.insumos.length > 0) {
+            <div class="relative">
+              <div class="absolute -left-9 w-8 h-8 rounded-full flex items-center justify-center"
+                   style="background:rgba(45,143,173,0.2); border:2px solid #2D8FAD;">
+                <svg class="w-4 h-4" style="color:#2D8FAD" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2"/>
+                </svg>
+              </div>
+              <div class="rounded-xl p-4" style="background:#0F172A; border:1px solid #334155;">
+                <p class="text-sm font-semibold text-text-primary mb-2">
+                  {{ resultado.insumos.length }} insumo(s) vinculado(s)
+                </p>
+                <div class="space-y-1">
+                  @for (ins of resultado.insumos; track ins.id) {
+                    <p class="text-xs text-text-muted">
+                      <span class="text-text-secondary font-medium">{{ ins.nome }}</span>
+                      @if (ins.codigo) { · <span class="font-mono">{{ ins.codigo }}</span> }
+                      @if (ins.loteInsumo) { · Lote: <span class="font-mono" style="color:#00B4D8;">{{ ins.loteInsumo }}</span> }
+                      · {{ ins.quantidade }} {{ ins.unidade }}
+                    </p>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Encerramento -->
+          @if (resultado.encerradoEm) {
+            <div class="relative">
+              <div class="absolute -left-9 w-8 h-8 rounded-full flex items-center justify-center"
+                   style="background:rgba(249,168,37,0.2); border:2px solid #F9A825;">
+                <svg class="w-4 h-4" style="color:#F9A825" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              <div class="rounded-xl p-4" style="background:#0F172A; border:1px solid #334155;">
+                <div class="flex items-start justify-between flex-wrap gap-2">
+                  <div>
+                    <p class="text-sm font-semibold text-text-primary">Lote encerrado</p>
+                    <p class="text-xs text-text-muted mt-1">Aguardando inspeção de qualidade</p>
+                  </div>
+                  <span class="text-xs font-mono" style="color:#F9A825;">
+                    {{ resultado.encerradoEm | date:'dd/MM/yyyy HH:mm' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Inspeção -->
+          @if (resultado.inspecao) {
+            <div class="relative">
+              <div class="absolute -left-9 w-8 h-8 rounded-full flex items-center justify-center"
+                   [ngStyle]="parseStyle(timelineIconCss(resultado.inspecao.resultado))">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+              </div>
+              <div class="rounded-xl p-4" style="background:#0F172A; border:1px solid #334155;">
+                <div class="flex items-start justify-between flex-wrap gap-2">
+                  <div>
+                    <p class="text-sm font-semibold text-text-primary">Inspeção realizada</p>
+                    <p class="text-xs text-text-muted mt-1">
+                      Inspetor: <span class="text-text-secondary">{{ resultado.inspecao.inspetor?.nome || '—' }}</span>
+                    </p>
+                    @if (resultado.inspecao.descricaoDesvio) {
+                      <p class="text-xs text-text-muted mt-1 italic">"{{ resultado.inspecao.descricaoDesvio }}"</p>
+                    }
+                  </div>
+                  <div class="text-right">
+                    <span class="badge" [ngClass]="resultadoCss(resultado.inspecao.resultado)">
+                      {{ getStatusLabel(resultado.inspecao.resultado) }}
+                    </span>
+                    <p class="text-xs font-mono mt-1" style="color:#94A3B8;">
+                      {{ resultado.inspecao.inspecionadoEm | date:'dd/MM/yyyy HH:mm' }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Status final -->
+          <div class="relative">
+            <div class="absolute -left-9 w-8 h-8 rounded-full flex items-center justify-center"
+                 [ngStyle]="parseStyle(timelineIconCss(resultado.status))">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <div class="rounded-xl p-4" style="background:#0F172A; border:1px solid #334155;">
+              <div class="flex items-center justify-between flex-wrap gap-2">
+                <p class="text-sm font-semibold text-text-primary">Status atual do lote</p>
+                <span class="badge" [ngClass]="getStatusCss(resultado.status)">
+                  {{ getStatusLabel(resultado.status) }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Insumos tabela -->
     <div class="glass-card rounded-2xl p-5">
       <h2 class="section-title">Insumos do lote</h2>
       @if (resultado.insumos.length === 0) {
@@ -130,13 +306,21 @@
       } @else {
         <div class="table-container" style="border-color:#334155;">
           <table class="table-base">
-            <thead><tr><th>Insumo</th><th>Código</th><th>Lote do insumo</th><th>Quantidade</th><th>Unidade</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Insumo</th>
+                <th>Código</th>
+                <th>Lote do insumo</th>
+                <th>Quantidade</th>
+                <th>Unidade</th>
+              </tr>
+            </thead>
             <tbody>
               @for (ins of resultado.insumos; track ins.id) {
                 <tr>
                   <td class="font-medium text-text-primary">{{ ins.nome }}</td>
                   <td class="font-mono text-xs">{{ ins.codigo || '—' }}</td>
-                  <td class="font-mono text-xs">{{ ins.loteInsumo || '—' }}</td>
+                  <td class="font-mono text-xs" style="color:#00B4D8;">{{ ins.loteInsumo || '—' }}</td>
                   <td class="font-mono">{{ ins.quantidade }}</td>
                   <td>{{ ins.unidade }}</td>
                 </tr>
@@ -148,6 +332,7 @@
     </div>
   }
 
+  <!-- Resultado por Insumo -->
   @if (resultadoInsumo(); as resultado) {
     <div class="glass-card rounded-2xl p-5">
       <div class="mb-6 flex items-start gap-4">
@@ -173,36 +358,42 @@
         </div>
       } @else {
         <div class="space-y-4">
-          @for (lote of resultado.lotesAfetados; track lote.id) {
+          @for (loteAfetado of resultado.lotesAfetados; track loteAfetado.id) {
             <div class="rounded-xl p-4" style="background:#0F172A; border:1px solid #334155;">
               <div class="flex items-start justify-between gap-4 flex-wrap">
                 <div>
-                  <h3 class="font-mono text-lg font-semibold text-text-primary">{{ lote.numero }}</h3>
+                  <h3 class="font-mono text-lg font-semibold text-text-primary">{{ loteAfetado.numero }}</h3>
                   <p class="mt-1 text-sm text-text-muted">
-                    {{ lote.produto.nome }} ({{ lote.produto.codigo }}) • {{ lote.dataProd | date:'dd/MM/yyyy' }}
+                    {{ loteAfetado.produto.nome }} ({{ loteAfetado.produto.codigo }}) • {{ loteAfetado.dataProd | date:'dd/MM/yyyy' }}
                   </p>
                 </div>
-                <span class="badge" [ngClass]="getStatusCss(lote.status)">{{ getStatusLabel(lote.status) }}</span>
+                <span class="badge" [ngClass]="getStatusCss(loteAfetado.status)">
+                  {{ getStatusLabel(loteAfetado.status) }}
+                </span>
               </div>
-              <div class="mt-4 grid gap-4 md:grid-cols-2">
+              <div class="mt-4 grid gap-4 md:grid-cols-3">
                 <div>
                   <p class="text-xs uppercase tracking-wide text-text-muted">Operador</p>
-                  <p class="mt-1 text-sm text-text-secondary">{{ lote.operador.nome }}</p>
+                  <p class="mt-1 text-sm text-text-secondary">{{ loteAfetado.operador.nome }}</p>
                 </div>
                 <div>
-                  <p class="text-xs uppercase tracking-wide text-text-muted">Quantidade produzida</p>
-                  <p class="mt-1 text-sm font-mono text-text-secondary">{{ lote.quantidadeProd }}</p>
+                  <p class="text-xs uppercase tracking-wide text-text-muted">Linha</p>
+                  <p class="mt-1 text-sm text-text-secondary">{{ loteAfetado.linha }}</p>
+                </div>
+                <div>
+                  <p class="text-xs uppercase tracking-wide text-text-muted">Qtd. produzida</p>
+                  <p class="mt-1 text-sm font-mono text-text-secondary">{{ loteAfetado.quantidadeProd }}</p>
                 </div>
               </div>
               <div class="mt-4">
                 <p class="mb-2 text-xs uppercase tracking-wide text-text-muted">Insumos correspondentes</p>
                 <div class="space-y-2">
-                  @for (ins of lote.insumosCorrespondentes; track ins.id) {
+                  @for (ins of loteAfetado.insumosCorrespondentes; track ins.id) {
                     <div class="rounded-lg px-3 py-2 text-sm text-text-secondary"
                          style="border:1px solid #334155;">
                       <strong class="text-text-primary">{{ ins.nome }}</strong>
                       — {{ ins.codigo || 's/código' }}
-                      — lote <span class="font-mono">{{ ins.loteInsumo || 's/lote' }}</span>
+                      — lote <span class="font-mono" style="color:#00B4D8;">{{ ins.loteInsumo || 's/lote' }}</span>
                       — {{ ins.quantidade }} {{ ins.unidade }}
                     </div>
                   }

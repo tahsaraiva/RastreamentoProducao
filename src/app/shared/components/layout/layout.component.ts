@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
@@ -34,7 +34,6 @@ interface NavItem {
       <div class="fixed left-0 bottom-0 top-[65px] w-72 z-40 transition-transform duration-300"
            style="background: rgba(15,23,42,0.98); backdrop-filter: blur(10px); border-right: 1px solid #334155;"
            [style.transform]="lgpdOpen() ? 'translateX(0)' : 'translateX(-100%)'">
-
         <div class="p-4 border-b flex items-center gap-3" style="border-color:#334155;">
           <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
                style="background: linear-gradient(135deg, #00B4D8, #1A5F7A);">
@@ -48,7 +47,6 @@ interface NavItem {
             <p class="text-xs" style="color:#94A3B8;">Lei nº 13.709/2018</p>
           </div>
         </div>
-
         <div class="py-2">
           @for (item of lgpdItems; track item.label) {
             <button (click)="lgpdAction(item.action)"
@@ -61,7 +59,6 @@ interface NavItem {
             </button>
           }
         </div>
-
         <div class="absolute bottom-0 left-0 right-0 p-4 border-t text-center text-xs"
              style="border-color:#334155; color:#94A3B8;">
           🔒 Conformidade LGPD | Lei 13.709/2018
@@ -75,7 +72,7 @@ interface NavItem {
           <div class="flex justify-between items-center h-16">
 
             <!-- Logo -->
-            <a routerLink="/app/dashboard" class="flex items-center gap-3">
+            <a routerLink="/app" class="flex items-center gap-3">
               <div class="logo-icon w-10 h-10 animate-float">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -84,13 +81,13 @@ interface NavItem {
               </div>
               <div>
                 <div class="logo-text text-lg">IANDÊ TRACE</div>
-                <div class="text-xs" style="color:#94A3B8; letter-spacing:1px;">O sinal da sua produção</div>
+                <div class="text-xs" style="color:#94A3B8; letter-spacing:1px;">O sinal da sua produção 4.0</div>
               </div>
             </a>
 
             <!-- Nav -->
             <div class="flex items-center gap-1">
-              @for (item of navItems; track item.route) {
+              @for (item of navItems(); track item.route) {
                 <a [routerLink]="item.route" routerLinkActive="active" class="sidebar-link px-4 py-2">
                   <span>{{ item.icon }}</span>
                   <span class="hidden sm:inline">{{ item.label }}</span>
@@ -108,7 +105,7 @@ interface NavItem {
                   </div>
                   <div class="hidden sm:block text-right">
                     <p class="text-sm font-semibold leading-tight" style="color:#F1F5F9;">{{ auth.user()?.nome }}</p>
-                    <p class="text-xs capitalize" style="color:#94A3B8;">{{ auth.user()?.perfil }}</p>
+                    <p class="text-xs capitalize" style="color:#94A3B8;">{{ perfilLabel() }}</p>
                   </div>
                   <svg class="w-4 h-4" style="color:#94A3B8;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -126,6 +123,10 @@ interface NavItem {
                       <div>
                         <p class="font-semibold text-sm" style="color:#F1F5F9;">{{ auth.user()?.nome }}</p>
                         <p class="text-xs" style="color:#94A3B8;">{{ auth.user()?.email }}</p>
+                        <p class="text-xs mt-0.5 px-2 py-0.5 rounded-full inline-block"
+                           style="background:rgba(0,180,216,0.1); color:#00B4D8;">
+                          {{ perfilLabel() }}
+                        </p>
                       </div>
                     </div>
                     <div class="py-1">
@@ -173,12 +174,28 @@ export class LayoutComponent {
   lgpdOpen     = signal(false);
   userMenuOpen = signal(false);
 
-  navItems: NavItem[] = [
-    { label: 'Dashboard',        route: '/app/dashboard',        icon: '📊' },
-    { label: 'Lotes',            route: '/app/lotes',            icon: '📦' },
-    { label: 'Produtos',         route: '/app/produtos',         icon: '🏭' },
-    { label: 'Rastreabilidade',  route: '/app/rastreabilidade',  icon: '🔍' },
-  ];
+  navItems = computed<NavItem[]>(() => {
+    const perfil = this.auth.perfil();
+    switch (perfil) {
+      case 'gestor':
+        return [
+          { label: 'Dashboard',       route: '/app/dashboard',       icon: '📊' },
+          { label: 'Lotes',           route: '/app/lotes',           icon: '📦' },
+          { label: 'Rastreabilidade', route: '/app/rastreabilidade', icon: '🔍' },
+        ];
+      case 'operador':
+        return [
+          { label: 'Lotes',    route: '/app/lotes',    icon: '📦' },
+          { label: 'Produtos', route: '/app/produtos', icon: '🏭' },
+        ];
+      case 'inspetor':
+        return [
+          { label: 'Lotes', route: '/app/lotes', icon: '📦' },
+        ];
+      default:
+        return [];
+    }
+  });
 
   lgpdItems = [
     { icon: '📋', label: 'Solicitar meus dados (SAR)',  action: 'sar' },
@@ -203,6 +220,15 @@ export class LayoutComponent {
     };
     alert(messages[action] ?? '');
     if (action === 'revoke') this.auth.logout();
+  }
+
+  perfilLabel(): string {
+    const map: Record<string, string> = {
+      gestor:   'Gestor de Qualidade',
+      operador: 'Operador de Linha',
+      inspetor: 'Inspetor de Qualidade',
+    };
+    return map[this.auth.perfil() ?? ''] ?? this.auth.perfil() ?? '';
   }
 
   userInitial() {

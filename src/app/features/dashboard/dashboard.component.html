@@ -85,11 +85,11 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
           </svg>
-          Produção por Dia
+          Lotes por Dia
         </h2>
-        <span class="text-xs text-text-muted">Última semana</span>
+        <span class="text-xs text-text-muted">Clique em um dia para ver os lotes</span>
       </div>
-      <div style="position:relative; height:260px;">
+      <div style="position:relative; height:260px; cursor:pointer;">
         <canvas #barChart></canvas>
       </div>
     </div>
@@ -110,6 +110,74 @@
       </div>
     </div>
   </div>
+
+  <!-- Lotes do dia selecionado -->
+  @if (diaSelecionado()) {
+    <div class="glass-card rounded-2xl overflow-hidden animate-fade-in">
+      <div class="flex items-center justify-between p-5 border-b border-dark-border">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center"
+               style="background:rgba(0,180,216,0.2);">
+            <svg class="w-4 h-4" style="color:#00B4D8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="font-semibold text-text-primary">Lotes de {{ diaSelecionado() }}</h2>
+            <p class="text-xs text-text-muted">{{ lotesDoDia().length }} lote(s) encontrado(s)</p>
+          </div>
+        </div>
+        <button (click)="limparDiaSelecionado()" class="btn-secondary text-xs px-3 py-1.5">
+          ✕ Fechar
+        </button>
+      </div>
+
+      @if (lotesDoDia().length === 0) {
+        <div class="p-8 text-center text-text-muted text-sm">
+          Nenhum lote registrado neste dia.
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="table-base">
+            <thead>
+              <tr>
+                <th>Nº do Lote</th>
+                <th>Produto</th>
+                <th>Operador</th>
+                <th>Data</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (lote of lotesDoDia(); track lote.id) {
+                <tr>
+                  <td><span class="font-mono text-xs" style="color:#00B4D8;">{{ lote.numero }}</span></td>
+                  <td>
+                    <p class="text-sm font-medium text-text-primary">{{ lote.produto.nome }}</p>
+                    <p class="text-xs text-text-muted">{{ lote.produto.codigo }}</p>
+                  </td>
+                  <td class="text-sm text-text-secondary">{{ lote.operador }}</td>
+                  <td class="text-sm text-text-muted">{{ lote.dataProd | date:'dd/MM/yyyy' }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="getStatusCss(lote.status)">
+                      {{ getStatusLabel(lote.status) }}
+                    </span>
+                  </td>
+                  <td>
+                    <a [routerLink]="['/app/lotes', lote.id]" class="text-xs" style="color:#00B4D8;">
+                      Ver →
+                    </a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
 
   <!-- Line chart -->
   <div class="glass-card rounded-2xl p-5">
@@ -155,7 +223,11 @@
               </td>
               <td class="text-sm text-text-secondary">{{ lote.operador }}</td>
               <td class="text-sm text-text-muted">{{ lote.dataProd | date:'dd/MM/yyyy' }}</td>
-              <td><span class="badge" [ngClass]="getStatusCss(lote.status)">{{ getStatusLabel(lote.status) }}</span></td>
+              <td>
+                <span class="badge" [ngClass]="getStatusCss(lote.status)">
+                  {{ getStatusLabel(lote.status) }}
+                </span>
+              </td>
             </tr>
           }
         </tbody>

@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgStyle } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
@@ -19,6 +19,8 @@ interface ResultadoLoteView {
   quantidadeRepr: number;
   status: string;
   observacoes?: string | null;
+  abertoEm?: Date | null;
+  encerradoEm?: Date | null;
   produto: {
     nome: string;
     codigo: string;
@@ -75,15 +77,6 @@ interface ResultadoInsumoView {
   }>;
 }
 
-const STATUS_LABELS_LOCAL: Record<string, string> = {
-  em_producao: 'Em produção',
-  aguardando_inspecao: 'Aguardando inspeção',
-  aprovado: 'Aprovado',
-  aprovado_restricao: 'Aprovado c/ restrição',
-  aprovado_com_restricao: 'Aprovado c/ restrição',
-  reprovado: 'Reprovado',
-};
-
 const TURNO_LABELS_LOCAL: Record<string, string> = {
   manha: 'Manhã',
   tarde: 'Tarde',
@@ -93,7 +86,7 @@ const TURNO_LABELS_LOCAL: Record<string, string> = {
 @Component({
   selector: 'app-rastreabilidade',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, NgStyle, FormsModule, RouterLink],
   templateUrl: './rastreabilidade.component.html',
 })
 export class RastreabilidadeComponent implements OnInit {
@@ -103,6 +96,9 @@ export class RastreabilidadeComponent implements OnInit {
 
   tipoBusca = signal<TipoBusca>('lote');
   termo = signal('');
+
+  tipoBuscaValue: string = 'lote';
+  termoValue: string = '';
 
   loading = signal(false);
   error = signal<string | null>(null);
@@ -116,12 +112,16 @@ export class RastreabilidadeComponent implements OnInit {
 
     if (tipo === 'lote' || tipo === 'insumo') {
       this.tipoBusca.set(tipo);
+      this.tipoBuscaValue = tipo;
     } else if (q) {
-      this.tipoBusca.set(q.toUpperCase().startsWith('LOT-') ? 'lote' : 'insumo');
+      const t = q.toUpperCase().startsWith('LOT-') ? 'lote' : 'insumo';
+      this.tipoBusca.set(t);
+      this.tipoBuscaValue = t;
     }
 
     if (q) {
       this.termo.set(q);
+      this.termoValue = q;
       await this.buscar();
     }
   }
@@ -142,10 +142,7 @@ export class RastreabilidadeComponent implements OnInit {
 
       this.router.navigate([], {
         relativeTo: this.route,
-        queryParams: {
-          q: termo,
-          tipo: this.tipoBusca(),
-        },
+        queryParams: { q: termo, tipo: this.tipoBusca() },
         queryParamsHandling: 'merge',
       });
 
@@ -167,14 +164,11 @@ export class RastreabilidadeComponent implements OnInit {
 
   limpar() {
     this.termo.set('');
+    this.termoValue = '';
     this.error.set(null);
     this.resultadoLote.set(null);
     this.resultadoInsumo.set(null);
-
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: {},
-    });
+    this.router.navigate([], { relativeTo: this.route, queryParams: {} });
   }
 
   private mapResultadoLote(response: RastreabilidadePorLoteApiResponse): ResultadoLoteView {
@@ -187,6 +181,8 @@ export class RastreabilidadeComponent implements OnInit {
       quantidadeRepr: response.lote.quantidadeRepr,
       status: response.lote.status,
       observacoes: response.lote.observacoes ?? null,
+      abertoEm: response.lote.abertoEm ? new Date(response.lote.abertoEm) : null,
+      encerradoEm: response.lote.encerradoEm ? new Date(response.lote.encerradoEm) : null,
       produto: {
         nome: response.lote.produto.nome,
         codigo: response.lote.produto.codigo,
@@ -220,9 +216,7 @@ export class RastreabilidadeComponent implements OnInit {
     };
   }
 
-  private mapResultadoInsumo(
-    response: RastreabilidadePorInsumoApiResponse
-  ): ResultadoInsumoView {
+  private mapResultadoInsumo(response: RastreabilidadePorInsumoApiResponse): ResultadoInsumoView {
     return {
       termoBuscado: response.termoBuscado,
       totalLotesAfetados: response.totalLotesAfetados,
@@ -253,39 +247,63 @@ export class RastreabilidadeComponent implements OnInit {
   }
 
   getStatusLabel(s: string): string {
-  const map: Record<string, string> = {
-    em_producao: 'Em produção',
-    aguardando_inspecao: 'Aguardando inspeção',
-    aprovado: 'Aprovado',
-    aprovado_com_restricao: 'Aprovado c/ restrição',
-    aprovado_restricao: 'Aprovado c/ restrição',
-    reprovado: 'Reprovado',
-  };
-  return map[s] ?? s;
-}
+    const map: Record<string, string> = {
+      em_producao: 'Em produção',
+      aguardando_inspecao: 'Aguardando inspeção',
+      aprovado: 'Aprovado',
+      aprovado_com_restricao: 'Aprovado c/ restrição',
+      aprovado_restricao: 'Aprovado c/ restrição',
+      reprovado: 'Reprovado',
+    };
+    return map[s] ?? s;
+  }
 
-getStatusCss(s: string): string {
-  const map: Record<string, string> = {
-    em_producao: 'badge-em-producao',
-    aguardando_inspecao: 'badge-aguardando-inspecao',
-    aprovado: 'badge-aprovado',
-    aprovado_com_restricao: 'badge-aprovado-com-restricao',
-    aprovado_restricao: 'badge-aprovado-com-restricao',
-    reprovado: 'badge-reprovado',
-  };
-  return map[s] ?? 'badge';
-}
+  getStatusCss(s: string): string {
+    const map: Record<string, string> = {
+      em_producao: 'badge-em-producao',
+      aguardando_inspecao: 'badge-aguardando-inspecao',
+      aprovado: 'badge-aprovado',
+      aprovado_com_restricao: 'badge-aprovado-com-restricao',
+      aprovado_restricao: 'badge-aprovado-com-restricao',
+      reprovado: 'badge-reprovado',
+    };
+    return map[s] ?? 'badge';
+  }
 
-resultadoCss(r: string): string {
-  const map: Record<string, string> = {
-    aprovado: 'badge-aprovado',
-    aprovado_com_restricao: 'badge-aprovado-com-restricao',
-    aprovado_restricao: 'badge-aprovado-com-restricao',
-    reprovado: 'badge-reprovado',
-  };
-  return map[r] ?? 'badge';
-}
+  resultadoCss(r: string): string {
+    const map: Record<string, string> = {
+      aprovado: 'badge-aprovado',
+      aprovado_com_restricao: 'badge-aprovado-com-restricao',
+      aprovado_restricao: 'badge-aprovado-com-restricao',
+      reprovado: 'badge-reprovado',
+    };
+    return map[r] ?? 'badge';
+  }
+
   turnoLabel(turno: string) {
     return TURNO_LABELS_LOCAL[turno] ?? turno;
+  }
+
+  timelineIconCss(status: string): string {
+    const map: Record<string, string> = {
+      em_producao: 'background:rgba(0,180,216,0.2); color:#00B4D8;',
+      aguardando_inspecao: 'background:rgba(249,168,37,0.2); color:#F9A825;',
+      aprovado: 'background:rgba(46,125,50,0.2); color:#66BB6A;',
+      aprovado_com_restricao: 'background:rgba(245,124,0,0.2); color:#FFB74D;',
+      aprovado_restricao: 'background:rgba(245,124,0,0.2); color:#FFB74D;',
+      reprovado: 'background:rgba(198,40,40,0.2); color:#EF9A9A;',
+    };
+    return map[status] ?? 'background:rgba(71,85,105,0.2); color:#94A3B8;';
+  }
+
+  parseStyle(styleStr: string): Record<string, string> {
+    const result: Record<string, string> = {};
+    styleStr.split(';').forEach(rule => {
+      const [key, value] = rule.split(':');
+      if (key && value) {
+        result[key.trim()] = value.trim();
+      }
+    });
+    return result;
   }
 }
