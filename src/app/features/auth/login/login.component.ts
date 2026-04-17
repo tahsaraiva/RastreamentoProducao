@@ -24,7 +24,7 @@ import { AuthService } from '../../../core/services/auth.service';
               </svg>
             </div>
             <h1 class="logo-text text-2xl">IANDÊ TRACE</h1>
-            <p class="text-sm mt-1" style="color:#CBD5E1;">O sinal da sua produção — Indústria 5.0</p>
+            <p class="text-sm mt-1" style="color:#CBD5E1;">O sinal da sua produção — Indústria 4.0</p>
             <div class="mt-3 px-3 py-2 rounded-lg text-xs" style="background:rgba(46,125,50,0.1); color:#94A3B8;">
               🌿 Tecnologia amazônica &nbsp;|&nbsp; 🔒 Conformidade LGPD
             </div>
