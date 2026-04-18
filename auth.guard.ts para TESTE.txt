@@ -1,0 +1,98 @@
+D:\FullStack Web INDT\PROJETO FINAL\atualização luiz\RastreamentoProducao
+
+auth.guard.ts
+
+CÓDIGO CORRETO COM CREDENCIAIS, VERIFICAR SE VAI FUNCIONAR NO AMBIENTE DO LUIZ.
+
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+
+export const authGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+
+  if (auth.isAuth()) {
+    return true;
+
+  }
+
+  return router.createUrlTree(['/login']);
+};
+
+export const noAuthGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+
+  if (!auth.isAuth()) {
+    return true;
+  }
+
+  return router.createUrlTree(['/app/dashboard']);
+};
+
+
+===========================================================
+
+CÓDIGO PARA RETIRAR AS CREDENCIAIS
+
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+
+export const authGuard: CanActivateFn = () => {
+  return true; // temporário - remove autenticação
+};
+
+export const noAuthGuard: CanActivateFn = () => {
+  return true; // temporário - remove autenticação
+};
+
+
+============================================================
+
+Credenciais por perfil
+
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+
+export const authGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (auth.isAuth()) return true;
+  return router.createUrlTree(['/login']);
+};
+
+export const noAuthGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (!auth.isAuth()) return true;
+  return router.createUrlTree(['/app']);
+};
+
+export const gestorGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (!auth.isAuth()) return router.createUrlTree(['/login']);
+  if (auth.perfil() === 'gestor') return true;
+  return router.createUrlTree(['/app']);
+};
+
+export const inspetorGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (!auth.isAuth()) return router.createUrlTree(['/login']);
+  const perfil = auth.perfil();
+  if (perfil === 'inspetor' || perfil === 'gestor') return true;
+  return router.createUrlTree(['/app']);
+};
+
+export const operadorGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (!auth.isAuth()) return router.createUrlTree(['/login']);
+  const perfil = auth.perfil();
+  if (perfil === 'operador' || perfil === 'gestor') return true;
+  return router.createUrlTree(['/app']);
+};
