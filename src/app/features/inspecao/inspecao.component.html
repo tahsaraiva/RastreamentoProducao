@@ -1,21 +1,25 @@
 <section class="space-y-6 animate-slide-up max-w-3xl">
+
   @if (loading()) {
     <div class="glass-card rounded-2xl p-6 text-text-muted">Carregando lote...</div>
   }
 
   @if (error()) {
-    <div class="rounded-2xl p-4 text-sm" style="background:rgba(198,40,40,0.1); border:1px solid rgba(198,40,40,0.3); color:#EF9A9A;">
-      {{ error() }}
+    <div class="rounded-2xl p-4 text-sm flex items-center gap-2"
+         style="background:rgba(198,40,40,0.1); border:1px solid rgba(198,40,40,0.3); color:#EF9A9A;">
+      ⚠️ {{ error() }}
     </div>
   }
 
   @if (success()) {
-    <div class="rounded-2xl p-4 text-sm" style="background:rgba(46,125,50,0.1); border:1px solid rgba(46,125,50,0.3); color:#66BB6A;">
-      {{ success() }}
+    <div class="rounded-2xl p-4 text-sm flex items-center gap-2"
+         style="background:rgba(46,125,50,0.1); border:1px solid rgba(46,125,50,0.3); color:#66BB6A;">
+      ✅ {{ success() }}
     </div>
   }
 
   @if (lote(); as loteAtual) {
+
     <div class="flex items-start justify-between gap-4 flex-wrap">
       <div>
         <p class="text-sm text-text-muted">Inspeção de qualidade</p>
@@ -23,89 +27,178 @@
         <p class="mt-1 text-sm text-text-muted">{{ loteAtual.produtoNome }} • {{ loteAtual.linha }}</p>
       </div>
       <a [routerLink]="['/app/lotes', loteAtual.id]" class="btn-secondary text-sm px-4 py-2">
-        Voltar ao lote
+        ← Voltar ao lote
       </a>
     </div>
 
     @if (!canInspect) {
-      <div class="rounded-2xl p-4 text-sm" style="background:rgba(249,168,37,0.1); border:1px solid rgba(249,168,37,0.3); color:#FFD54F;">
-        Este lote não está aguardando inspeção. A tela está em modo de consulta.
+      <div class="rounded-2xl p-4 text-sm flex items-center gap-3"
+           style="background:rgba(249,168,37,0.1); border:1px solid rgba(249,168,37,0.3); color:#FFD54F;">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        Este lote não está aguardando inspeção. Status atual:
+        <strong class="ml-1">{{ loteAtual.status }}</strong>
       </div>
     }
 
     <div class="grid gap-6 lg:grid-cols-3">
+
       <div class="glass-card rounded-2xl p-5 lg:col-span-1">
         <h2 class="section-title">Resumo do lote</h2>
-        <dl class="space-y-3 text-sm text-text-secondary">
+        <dl class="space-y-4 text-sm">
           <div>
             <dt class="text-xs uppercase tracking-wide text-text-muted">Produto</dt>
-            <dd class="mt-1">{{ loteAtual.produtoNome }}</dd>
+            <dd class="mt-1 text-text-secondary font-medium">{{ loteAtual.produtoNome }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs uppercase tracking-wide text-text-muted">Linha</dt>
+            <dd class="mt-1 text-text-secondary">{{ loteAtual.linha }}</dd>
           </div>
           <div>
             <dt class="text-xs uppercase tracking-wide text-text-muted">Data produção</dt>
-            <dd class="mt-1">{{ loteAtual.dataProd | date:'dd/MM/yyyy' }}</dd>
+            <dd class="mt-1 text-text-secondary">{{ loteAtual.dataProd | date:'dd/MM/yyyy' }}</dd>
           </div>
           <div>
-            <dt class="text-xs uppercase tracking-wide text-text-muted">Quantidade produzida</dt>
-            <dd class="mt-1 font-mono">{{ loteAtual.qtdProduzida | number:'1.0-0' }}</dd>
+            <dt class="text-xs uppercase tracking-wide text-text-muted">Qtd. produzida</dt>
+            <dd class="mt-1 text-text-secondary font-mono text-lg font-semibold">
+              {{ loteAtual.qtdProduzida | number:'1.0-0' }}
+            </dd>
           </div>
           <div>
-            <dt class="text-xs uppercase tracking-wide text-text-muted">Status atual</dt>
-            <dd class="mt-1">{{ loteAtual.status }}</dd>
+            <dt class="text-xs uppercase tracking-wide text-text-muted">Status</dt>
+            <dd class="mt-1">
+              @if (loteAtual.status === 'aguardando_inspecao') {
+                <span class="badge badge-aguardando-inspecao">⏳ Aguardando inspeção</span>
+              } @else {
+                <span class="text-text-secondary">{{ loteAtual.status }}</span>
+              }
+            </dd>
           </div>
         </dl>
       </div>
 
       <div class="glass-card rounded-2xl p-5 lg:col-span-2">
         <h2 class="section-title">Registrar inspeção</h2>
-        <div class="space-y-4">
-          <div>
-            <label class="form-label">Resultado</label>
-            <select [(ngModel)]="form.resultado" [disabled]="!canInspect || saving()" class="input-field">
-              <option value="aprovado">Aprovado</option>
-              <option value="aprovado_restricao">Aprovado com restrição</option>
-              <option value="reprovado">Reprovado</option>
-            </select>
-          </div>
+
+        <div class="space-y-5">
 
           <div>
-            <label class="form-label">Quantidade reprovada</label>
-            <input [(ngModel)]="form.quantidadeRepr" [disabled]="!canInspect || saving()"
-                   type="number" min="0" class="input-field" />
+            <label class="form-label mb-3">
+              Resultado da inspeção <span style="color:#EF9A9A;">*</span>
+            </label>
+            <div class="grid grid-cols-1 gap-3">
+              @for (r of resultados; track r.value) {
+                <button type="button"
+                  (click)="selecionarResultado(r.value)"
+                  [disabled]="!canInspect || saving()"
+                  class="w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 text-left"
+                  [style]="getCardStyle(r.value)"
+                  [class.opacity-50]="!canInspect">
+                  <span class="text-xl">{{ r.icon }}</span>
+                  <div class="flex-1">
+                    <p class="text-sm font-semibold text-text-primary">{{ r.label }}</p>
+                    @if (r.value === 'aprovado') {
+                      <p class="text-xs text-text-muted">Lote aprovado para distribuição</p>
+                    } @else if (r.value === 'aprovado_restricao') {
+                      <p class="text-xs text-text-muted">Aprovado com ressalvas — requer descrição do desvio</p>
+                    } @else {
+                      <p class="text-xs text-text-muted">Lote bloqueado — requer descrição do desvio</p>
+                    }
+                  </div>
+                  @if (form.resultado === r.value) {
+                    <svg class="w-5 h-5 flex-shrink-0" style="color:#00B4D8"
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                  }
+                </button>
+              }
+            </div>
           </div>
 
-          @if (precisaDesvio) {
-            <div>
-              <label class="form-label">Descrição do desvio <span style="color:#EF9A9A;">*</span></label>
-              <textarea [(ngModel)]="form.descricaoDesvio" [disabled]="!canInspect || saving()"
-                        rows="5" class="input-field resize-none"
-                        placeholder="Obrigatório para resultados não aprovados."></textarea>
+          @if (form.resultado !== 'aprovado') {
+            <div class="animate-fade-in">
+              <label class="form-label">Quantidade reprovada</label>
+              <input [(ngModel)]="form.quantidadeRepr"
+                     [disabled]="!canInspect || saving()"
+                     type="number" min="0" class="input-field"
+                     placeholder="0" />
             </div>
           }
 
-          @if (form.resultado === 'reprovado') {
+          @if (precisaDesvio) {
+            <div class="animate-fade-in">
+              <label class="form-label">
+                Descrição do desvio <span style="color:#EF9A9A;">*</span>
+              </label>
+              <textarea [(ngModel)]="form.descricaoDesvio"
+                        [disabled]="!canInspect || saving()"
+                        rows="4" class="input-field resize-none"
+                        placeholder="Descreva o desvio encontrado, como foi identificado e quais ações foram tomadas...">
+              </textarea>
+              <p class="text-xs mt-1" style="color:#94A3B8;">
+                Obrigatório para resultados não aprovados.
+              </p>
+            </div>
+          }
+
+          <div>
+            <label class="form-label">Observações adicionais</label>
+            <textarea [(ngModel)]="form.observacoes"
+                      [disabled]="!canInspect || saving()"
+                      rows="3" class="input-field resize-none"
+                      placeholder="Informações complementares sobre esta inspeção (opcional)">
+            </textarea>
+          </div>
+
+          @if (form.resultado === 'aprovado_restricao' && canInspect) {
             <div class="rounded-xl p-4 text-sm flex items-start gap-3"
-                 style="background:rgba(198,40,40,0.1); border:1px solid rgba(198,40,40,0.3);">
-              <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color:#EF9A9A" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 style="background:rgba(245,124,0,0.1); border:1px solid rgba(245,124,0,0.3);">
+              <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color:#FFB74D"
+                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
               </svg>
-              <p style="color:#EF9A9A;">O status do lote será atualizado para <strong>Reprovado</strong>.</p>
+              <p style="color:#FFB74D;">
+                O lote será <strong>aprovado com ressalvas</strong>. Descreva o desvio e as ações corretivas tomadas.
+                Este lote poderá ser submetido a uma nova inspeção posteriormente.
+              </p>
             </div>
           }
 
-          <button type="button" (click)="salvarInspecao()" [disabled]="saving() || !canInspect"
-            class="btn-primary w-full justify-center py-2.5">
+          @if (form.resultado === 'reprovado' && canInspect) {
+            <div class="rounded-xl p-4 text-sm flex items-start gap-3"
+                 style="background:rgba(198,40,40,0.1); border:1px solid rgba(198,40,40,0.3);">
+              <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color:#EF9A9A"
+                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              <p style="color:#EF9A9A;">
+                O lote será <strong>bloqueado para distribuição</strong> após registrar esta inspeção.
+              </p>
+            </div>
+          }
+
+          <button type="button"
+            (click)="salvarInspecao()"
+            [disabled]="saving() || !canInspect"
+            class="btn-primary w-full justify-center py-3">
             @if (saving()) {
               <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
               </svg>
               Salvando...
+            } @else if (!canInspect) {
+              🔒 Lote não disponível para inspeção
             } @else {
-              Registrar inspeção
+              🔬 Registrar inspeção
             }
           </button>
+
         </div>
       </div>
     </div>

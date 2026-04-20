@@ -5,7 +5,11 @@ import { AuthService } from '../../../core/services/auth.service';
 @Component({
   selector: 'app-redirect',
   standalone: true,
-  template: `<div class="p-8 text-text-muted">Redirecionando...</div>`,
+  template: `
+    <div class="flex items-center justify-center h-64">
+      <div class="text-text-muted text-sm">Redirecionando...</div>
+    </div>
+  `,
 })
 export class RedirectComponent implements OnInit {
   private auth = inject(AuthService);

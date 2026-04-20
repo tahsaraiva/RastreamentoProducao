@@ -41,3 +41,13 @@ export const operadorGuard: CanActivateFn = () => {
   if (perfil === 'operador' || perfil === 'gestor') return true;
   return router.createUrlTree(['/app']);
 };
+
+// Permite operador, inspetor e gestor
+export const lotesGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (!auth.isAuth()) return router.createUrlTree(['/login']);
+  const perfil = auth.perfil();
+  if (perfil === 'operador' || perfil === 'inspetor' || perfil === 'gestor') return true;
+  return router.createUrlTree(['/login']);
+};

@@ -92,6 +92,12 @@ export class LoteFormComponent implements OnInit {
       this.error.set('Usuário não autenticado.');
       return;
     }
+    const operadorId = parseInt(user.id, 10);
+
+  if (isNaN(operadorId)) {
+    this.error.set('Erro ao identificar o operador. Faça login novamente.');
+    return;
+  }
 
     if (
       !this.form.produtoId ||
@@ -114,7 +120,7 @@ export class LoteFormComponent implements OnInit {
         produtoId: Number(this.form.produtoId),
         dataProducao: this.form.dataProducao,
         turno: this.form.turno,
-        operadorId: Number(user.id),
+        operadorId: parseInt(user.id),
         linha: this.form.linha.trim(),
         quantidadeProd: Number(this.form.quantidadeProd),
         observacoes: this.form.observacoes.trim() || null,

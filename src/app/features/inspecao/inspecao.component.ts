@@ -18,6 +18,8 @@ interface LoteInspecaoView {
   qtdProduzida: number;
 }
 
+type ResultadoInspecao = 'aprovado' | 'aprovado_restricao' | 'reprovado';
+
 @Component({
   selector: 'app-inspecao',
   standalone: true,
@@ -38,21 +40,46 @@ export class InspecaoComponent implements OnInit {
 
   lote = signal<LoteInspecaoView | null>(null);
 
+  resultadoSelecionado = signal<ResultadoInspecao | null>(null);
+
   form = {
-    resultado: 'aprovado' as 'aprovado' | 'aprovado_restricao' | 'reprovado',
+    resultado: 'aprovado' as ResultadoInspecao,
     quantidadeRepr: 0,
     descricaoDesvio: '',
+    observacoes: '',
   };
+
+  resultados: { value: ResultadoInspecao; label: string; icon: string; style: string; styleSelected: string }[] = [
+    {
+      value: 'aprovado',
+      label: 'Aprovado',
+      icon: '✅',
+      style: 'border:1px solid #334155; background:transparent;',
+      styleSelected: 'border:1px solid #2E7D32; background:rgba(46,125,50,0.15);',
+    },
+    {
+      value: 'aprovado_restricao',
+      label: 'Aprovado com Restrição',
+      icon: '⚠️',
+      style: 'border:1px solid #334155; background:transparent;',
+      styleSelected: 'border:1px solid #F57C00; background:rgba(245,124,0,0.15);',
+    },
+    {
+      value: 'reprovado',
+      label: 'Reprovado',
+      icon: '❌',
+      style: 'border:1px solid #334155; background:transparent;',
+      styleSelected: 'border:1px solid #C62828; background:rgba(198,40,40,0.15);',
+    },
+  ];
 
   async ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
-
     if (!id) {
       this.error.set('ID do lote não informado.');
       this.loading.set(false);
       return;
     }
-
     this.loteId = id;
     await this.loadLote();
   }
@@ -61,9 +88,7 @@ export class InspecaoComponent implements OnInit {
     try {
       this.loading.set(true);
       this.error.set(null);
-
       const response = await this.loteApi.getById(this.loteId);
-
       this.lote.set({
         id: String(response.id),
         numero: response.numeroLote,
@@ -90,6 +115,22 @@ export class InspecaoComponent implements OnInit {
     return this.form.resultado !== 'aprovado';
   }
 
+  selecionarResultado(valor: ResultadoInspecao) {
+    if (!this.canInspect || this.saving()) return;
+    this.form.resultado = valor;
+    this.resultadoSelecionado.set(valor);
+    if (valor === 'aprovado') {
+      this.form.descricaoDesvio = '';
+      this.form.quantidadeRepr = 0;
+    }
+  }
+
+  getCardStyle(valor: ResultadoInspecao): string {
+    const r = this.resultados.find(r => r.value === valor);
+    if (!r) return '';
+    return this.form.resultado === valor ? r.styleSelected : r.style;
+  }
+
   async salvarInspecao() {
     if (!this.canInspect) {
       this.error.set('Somente lotes aguardando inspeção podem ser inspecionados.');
@@ -109,15 +150,11 @@ export class InspecaoComponent implements OnInit {
       const payload: CreateInspecaoApiPayload = {
         resultado: this.form.resultado,
         quantidadeRepr: Number(this.form.quantidadeRepr || 0),
-        descricaoDesvio: this.precisaDesvio
-          ? this.form.descricaoDesvio.trim()
-          : null,
+        descricaoDesvio: this.precisaDesvio ? this.form.descricaoDesvio.trim() : null,
       };
 
       await this.inspecaoApi.create(this.loteId, payload);
-
       this.success.set('Inspeção registrada com sucesso.');
-
       setTimeout(() => {
         this.router.navigate(['/app/lotes', this.loteId]);
       }, 800);

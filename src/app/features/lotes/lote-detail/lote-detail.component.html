@@ -1,11 +1,31 @@
 <section class="space-y-6 animate-slide-up">
+
   @if (loading()) {
     <div class="glass-card rounded-2xl p-6 text-text-muted">Carregando lote...</div>
   }
 
   @if (error()) {
-    <div class="rounded-2xl p-4 text-sm" style="background:rgba(198,40,40,0.1); border:1px solid rgba(198,40,40,0.3); color:#EF9A9A;">
+    <div class="rounded-2xl p-4 text-sm"
+         style="background:rgba(198,40,40,0.1); border:1px solid rgba(198,40,40,0.3); color:#EF9A9A;">
       {{ error() }}
+    </div>
+  }
+
+  @if (encerrado()) {
+    <div class="rounded-2xl p-5 flex items-start gap-4 animate-fade-in"
+         style="background:rgba(46,125,50,0.1); border:1px solid rgba(46,125,50,0.3);">
+      <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+           style="background:rgba(46,125,50,0.2);">
+        <svg class="w-5 h-5" style="color:#66BB6A" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+      </div>
+      <div>
+        <p class="font-semibold" style="color:#66BB6A;">Lote encerrado com sucesso!</p>
+        <p class="text-sm mt-1" style="color:#94A3B8;">
+          O lote foi enviado para inspeção de qualidade. Você será redirecionado em instantes...
+        </p>
+      </div>
     </div>
   }
 
@@ -15,21 +35,45 @@
         <p class="text-sm text-text-muted">Lote de produção</p>
         <h1 class="mt-1 text-2xl font-bold text-text-primary font-mono">{{ loteAtual.numero }}</h1>
       </div>
-      <div class="flex gap-2 flex-wrap">
-        @if (loteAtual.status === 'em_producao') {
+
+      <div class="flex gap-2 flex-wrap items-center">
+        @if (loteAtual.status === 'em_producao' && isOperador) {
           <button type="button" (click)="encerrarLote()" [disabled]="encerrarLoading()"
-            class="btn-primary px-4 py-2 text-sm" style="background:linear-gradient(135deg,#F9A825,#F57C00);">
-            {{ encerrarLoading() ? 'Encerrando...' : 'Encerrar lote' }}
+            class="btn-primary px-4 py-2 text-sm"
+            style="background:linear-gradient(135deg,#F9A825,#F57C00);">
+            @if (encerrarLoading()) {
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+              Encerrando...
+            } @else {
+              ✅ Encerrar lote
+            }
           </button>
           <a [routerLink]="['/app/lotes', loteAtual.id, 'insumos']" class="btn-secondary text-sm px-4 py-2">
-            Gerenciar insumos
+            🔗 Gerenciar insumos
           </a>
         }
-        @if (loteAtual.status === 'aguardando_inspecao') {
+
+        @if (loteAtual.status === 'aguardando_inspecao' && isOperador && !isInspetor) {
+          <div class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm"
+               style="background:rgba(249,168,37,0.1); border:1px solid rgba(249,168,37,0.3); color:#FFD54F;">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Aguardando inspeção de qualidade
+          </div>
+        }
+
+        @if (loteAtual.status === 'aguardando_inspecao' && isInspetor) {
           <a [routerLink]="['/app/lotes', loteAtual.id, 'inspecao']" class="btn-primary text-sm px-4 py-2">
-            Registrar inspeção
+            🔬 Registrar inspeção
           </a>
         }
+
+        <a routerLink="/app/lotes" class="btn-secondary text-sm px-4 py-2">← Voltar</a>
       </div>
     </div>
 
@@ -39,11 +83,18 @@
         <dl class="grid gap-4 sm:grid-cols-2">
           <div>
             <dt class="text-xs uppercase tracking-wide text-text-muted">Produto</dt>
-            <dd class="mt-1 text-sm text-text-secondary">{{ loteAtual.produto?.nome }} <span class="text-text-muted">({{ loteAtual.produto?.codigo }})</span></dd>
+            <dd class="mt-1 text-sm text-text-secondary">
+              {{ loteAtual.produto?.nome }}
+              <span class="text-text-muted">({{ loteAtual.produto?.codigo }})</span>
+            </dd>
           </div>
           <div>
             <dt class="text-xs uppercase tracking-wide text-text-muted">Status</dt>
-            <dd class="mt-1"><span class="badge" [ngClass]="getStatusCss(loteAtual.status)">{{ getStatusLabel(loteAtual.status) }}</span></dd>
+            <dd class="mt-1">
+              <span class="badge" [ngClass]="getStatusCss(loteAtual.status)">
+                {{ getStatusLabel(loteAtual.status) }}
+              </span>
+            </dd>
           </div>
           <div>
             <dt class="text-xs uppercase tracking-wide text-text-muted">Data produção</dt>
@@ -75,7 +126,9 @@
           </div>
           <div>
             <dt class="text-xs uppercase tracking-wide text-text-muted">Encerrado em</dt>
-            <dd class="mt-1 text-sm text-text-secondary">{{ loteAtual.encerradoEm ? (loteAtual.encerradoEm | date:'dd/MM/yyyy HH:mm') : '—' }}</dd>
+            <dd class="mt-1 text-sm text-text-secondary">
+              {{ loteAtual.encerradoEm ? (loteAtual.encerradoEm | date:'dd/MM/yyyy HH:mm') : '—' }}
+            </dd>
           </div>
         </dl>
         @if (loteAtual.observacoes) {
@@ -86,47 +139,121 @@
         }
       </div>
 
+      <!-- Inspeção -->
       <div class="glass-card rounded-2xl p-5">
-        <h2 class="section-title">Inspeção de Qualidade</h2>
-        @if (loteAtual.inspecao) {
-          <div class="space-y-3 text-sm">
-            <div>
-              <p class="text-xs text-text-muted uppercase tracking-wide mb-1">Resultado</p>
-              <span class="badge" [ngClass]="resultadoCss(loteAtual.inspecao.resultado || '')">
-                {{ getStatusLabel(loteAtual.inspecao.resultado || '') }}
-              </span>
-            </div>
-            <div>
-              <p class="text-xs text-text-muted uppercase tracking-wide mb-1">Qtd. reprovada</p>
-              <p class="text-text-secondary font-mono">{{ loteAtual.inspecao.qtdReprovada }}</p>
-            </div>
-            <div>
-              <p class="text-xs text-text-muted uppercase tracking-wide mb-1">Data</p>
-              <p class="text-text-secondary">{{ loteAtual.inspecao.dataInspecao | date:'dd/MM/yyyy HH:mm' }}</p>
-            </div>
-            <div>
-              <p class="text-xs text-text-muted uppercase tracking-wide mb-1">Inspetor</p>
-              <p class="text-text-secondary">{{ loteAtual.inspecao.inspetor?.nome || '—' }}</p>
-            </div>
-            @if (loteAtual.inspecao.desvio) {
-              <div class="rounded-xl p-3 mt-2" style="background:#0F172A; border:1px solid #334155;">
-                <p class="text-xs text-text-muted uppercase tracking-wide mb-1">Desvio</p>
-                <p class="text-sm text-text-secondary leading-relaxed">{{ loteAtual.inspecao.desvio }}</p>
-              </div>
+  <h2 class="section-title">Inspeção de Qualidade</h2>
+
+  @if (loteAtual.inspecao) {
+
+    <!-- Log da inspeção -->
+    <div class="rounded-xl p-4 mb-4"
+         style="background:#0F172A; border:1px solid #334155;">
+      <div class="flex items-start justify-between gap-3 flex-wrap mb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+               style="background:rgba(0,180,216,0.15);">
+            <svg class="w-3.5 h-3.5" style="color:#00B4D8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-text-primary">
+              {{ loteAtual.inspecao.inspetor?.nome || 'Inspetor não identificado' }}
+            </p>
+            <p class="text-xs text-text-muted">
+              {{ loteAtual.inspecao.dataInspecao | date:'dd/MM/yyyy HH:mm' }}
+            </p>
+          </div>
+        </div>
+        <span class="badge" [ngClass]="resultadoCss(loteAtual.inspecao.resultado || '')">
+          {{ getStatusLabel(loteAtual.inspecao.resultado || '') }}
+        </span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 text-xs mb-3">
+        <div>
+          <p class="text-text-muted uppercase tracking-wide mb-0.5">Qtd. reprovada</p>
+          <p class="font-mono text-text-secondary font-semibold">
+            {{ loteAtual.inspecao.qtdReprovada | number:'1.0-0' }}
+          </p>
+        </div>
+        <div>
+          <p class="text-text-muted uppercase tracking-wide mb-0.5">Data inspeção</p>
+          <p class="text-text-secondary">
+            {{ loteAtual.inspecao.dataInspecao | date:'dd/MM/yyyy' }}
+          </p>
+        </div>
+      </div>
+
+      @if (loteAtual.inspecao.desvio) {
+        <div class="mt-2 pt-3" style="border-top:1px solid #1E293B;">
+          <p class="text-xs text-text-muted uppercase tracking-wide mb-1">📋 Descrição do desvio</p>
+          <p class="text-xs text-text-secondary leading-relaxed">
+            {{ loteAtual.inspecao.desvio }}
+          </p>
+        </div>
+      }
+
+      @if (loteAtual.inspecao.observacoes) {
+        <div class="mt-2 pt-3" style="border-top:1px solid #1E293B;">
+          <p class="text-xs text-text-muted uppercase tracking-wide mb-1">💬 Observações</p>
+          <p class="text-xs text-text-secondary leading-relaxed">
+            {{ loteAtual.inspecao.observacoes }}
+          </p>
+        </div>
+      }
+    </div>
+
+    <!-- Alerta aprovado com restrição -->
+    @if (loteAtual.inspecao.resultado === 'aprovado_restricao' ||
+         loteAtual.inspecao.resultado === 'aprovado_com_restricao') {
+      <div class="rounded-xl p-4" style="background:rgba(245,124,0,0.1); border:1px solid rgba(245,124,0,0.3);">
+        <div class="flex items-start gap-3">
+          <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color:#FFB74D"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <div class="flex-1">
+            <p class="text-sm font-semibold" style="color:#FFB74D;">Aprovado com restrição</p>
+            <p class="text-xs mt-1" style="color:#94A3B8;">
+              Este lote foi aprovado com ressalvas. Verifique o desvio registrado acima.
+            </p>
+            @if (isInspetor) {
+              <button type="button" (click)="solicitarReinspcao()"
+                [disabled]="reinspcaoLoading()"
+                class="btn-primary mt-3 text-xs px-3 py-1.5"
+                style="background:linear-gradient(135deg,#F57C00,#F9A825);">
+                @if (reinspcaoLoading()) {
+                  <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                  </svg>
+                  Enviando...
+                } @else {
+                  🔄 Solicitar reinspeção
+                }
+              </button>
             }
           </div>
-        } @else {
-          <div class="rounded-xl p-4 text-sm text-text-muted" style="background:#0F172A; border:1px solid #334155;">
-            Nenhuma inspeção registrada.
-          </div>
-        }
+        </div>
       </div>
+    }
+
+  } @else {
+    <div class="rounded-xl p-4 text-sm text-text-muted"
+         style="background:#0F172A; border:1px solid #334155;">
+      Nenhuma inspeção registrada.
+    </div>
+  }
+</div>
     </div>
 
     <div class="glass-card rounded-2xl p-5">
       <div class="flex items-center justify-between mb-4">
         <h2 class="section-title mb-0">Insumos vinculados</h2>
-        @if (loteAtual.status === 'em_producao') {
+        @if (loteAtual.status === 'em_producao' && isOperador) {
           <a [routerLink]="['/app/lotes', loteAtual.id, 'insumos']" class="text-sm" style="color:#00B4D8;">
             Adicionar / remover
           </a>
@@ -139,7 +266,15 @@
       } @else {
         <div class="table-container" style="border-color:#334155;">
           <table class="table-base">
-            <thead><tr><th>Insumo</th><th>Código</th><th>Lote do insumo</th><th>Quantidade</th><th>Unidade</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Insumo</th>
+                <th>Código</th>
+                <th>Lote do insumo</th>
+                <th>Quantidade</th>
+                <th>Unidade</th>
+              </tr>
+            </thead>
             <tbody>
               @for (ins of loteAtual.insumos; track ins.id) {
                 <tr>

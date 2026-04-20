@@ -251,8 +251,7 @@ export class RastreabilidadeComponent implements OnInit {
       em_producao: 'Em produção',
       aguardando_inspecao: 'Aguardando inspeção',
       aprovado: 'Aprovado',
-      aprovado_com_restricao: 'Aprovado c/ restrição',
-      aprovado_restricao: 'Aprovado c/ restrição',
+      aprovado_com_restricao: 'Aprovado com restrição',
       reprovado: 'Reprovado',
     };
     return map[s] ?? s;
@@ -264,7 +263,6 @@ export class RastreabilidadeComponent implements OnInit {
       aguardando_inspecao: 'badge-aguardando-inspecao',
       aprovado: 'badge-aprovado',
       aprovado_com_restricao: 'badge-aprovado-com-restricao',
-      aprovado_restricao: 'badge-aprovado-com-restricao',
       reprovado: 'badge-reprovado',
     };
     return map[s] ?? 'badge';
@@ -274,7 +272,6 @@ export class RastreabilidadeComponent implements OnInit {
     const map: Record<string, string> = {
       aprovado: 'badge-aprovado',
       aprovado_com_restricao: 'badge-aprovado-com-restricao',
-      aprovado_restricao: 'badge-aprovado-com-restricao',
       reprovado: 'badge-reprovado',
     };
     return map[r] ?? 'badge';
@@ -290,7 +287,6 @@ export class RastreabilidadeComponent implements OnInit {
       aguardando_inspecao: 'background:rgba(249,168,37,0.2); color:#F9A825;',
       aprovado: 'background:rgba(46,125,50,0.2); color:#66BB6A;',
       aprovado_com_restricao: 'background:rgba(245,124,0,0.2); color:#FFB74D;',
-      aprovado_restricao: 'background:rgba(245,124,0,0.2); color:#FFB74D;',
       reprovado: 'background:rgba(198,40,40,0.2); color:#EF9A9A;',
     };
     return map[status] ?? 'background:rgba(71,85,105,0.2); color:#94A3B8;';

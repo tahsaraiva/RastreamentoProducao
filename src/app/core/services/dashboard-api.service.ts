@@ -14,6 +14,7 @@ export interface DashboardApiResponse {
     id: number;
     numeroLote: string;
     dataProducao: string;
+    abertoEm: string;
     status: string;
     produto: {
       id: number;

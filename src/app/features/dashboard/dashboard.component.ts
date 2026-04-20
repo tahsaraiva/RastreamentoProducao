@@ -17,6 +17,7 @@ interface LoteView {
   id: string;
   numero: string;
   dataProd: Date;
+  abertoEm: Date;
   status: string;
   operador: string;
   produto: {
@@ -72,7 +73,8 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         response.ultimosLotes.map((lote) => ({
           id: String(lote.id),
           numero: lote.numeroLote,
-          dataProd: new Date(lote.dataProducao),
+          dataProd: this.parseDateLocal(lote.dataProducao),
+          abertoEm: this.parseDateLocal(lote.dataProducao),
           status: lote.status,
           operador: lote.operador.nome,
           produto: {
@@ -93,6 +95,11 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     setTimeout(() => this.initCharts(), 300);
+  }
+
+  private parseDateLocal(dateStr: string): Date {
+    const [year, month, day] = dateStr.split('T')[0].split('-').map(Number);
+    return new Date(year, month - 1, day);
   }
 
   private getUltimos7Dias(): { label: string; dateStr: string }[] {
@@ -154,61 +161,60 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     const dias7 = this.getUltimos7Dias();
 
     const barChartInstance = new Chart(this.barChartRef.nativeElement, {
-  type: 'bar',
-  data: {
-    labels: dias7.map(d => d.label),
-    datasets: [{
-      label: 'Lotes produzidos',
-      data: this.getLotesPorDia(),
-      backgroundColor: dias7.map(() => 'rgba(0,180,216,0.7)'),
-      borderColor: '#00B4D8',
-      borderWidth: 1,
-      borderRadius: 8,
-    }],
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { labels: { color: legendColor } },
-      tooltip: {
-        callbacks: {
-          footer: () => ['Clique para ver os lotes'],
-        }
-      }
-    },
-    scales: {
-      y: {
-        grid: { color: gridColor },
-        ticks: { color: tickColor, stepSize: 1 },
-        beginAtZero: true,
+      type: 'bar',
+      data: {
+        labels: dias7.map(d => d.label),
+        datasets: [{
+          label: 'Lotes produzidos',
+          data: this.getLotesPorDia(),
+          backgroundColor: dias7.map(() => 'rgba(0,180,216,0.7)'),
+          borderColor: '#00B4D8',
+          borderWidth: 1,
+          borderRadius: 8,
+        }],
       },
-      x: { ticks: { color: tickColor } },
-    },
-  },
-});
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: legendColor } },
+          tooltip: {
+            callbacks: {
+              footer: () => ['Clique para ver os lotes'],
+            }
+          }
+        },
+        scales: {
+          y: {
+            grid: { color: gridColor },
+            ticks: { color: tickColor, stepSize: 1 },
+            beginAtZero: true,
+          },
+          x: { ticks: { color: tickColor } },
+        },
+      },
+    });
 
-// Adiciona o click separado para evitar erro de tipagem
-this.barChartRef.nativeElement.addEventListener('click', (event: MouseEvent) => {
-  const points = barChartInstance.getElementsAtEventForMode(
-    event,
-    'nearest',
-    { intersect: true },
-    false
-  );
+    this.barChartRef.nativeElement.addEventListener('click', (event: MouseEvent) => {
+      const points = barChartInstance.getElementsAtEventForMode(
+        event,
+        'nearest',
+        { intersect: true },
+        false
+      );
 
-  if (points.length > 0) {
-    const index = points[0].index;
-    const dia = dias7[index];
-    this.selecionarDia(dia.label, dia.dateStr);
+      if (points.length > 0) {
+        const index = points[0].index;
+        const dia = dias7[index];
+        this.selecionarDia(dia.label, dia.dateStr);
 
-    const dataset = barChartInstance.data.datasets[0] as any;
-    dataset.backgroundColor = dias7.map((_, i) =>
-      i === index ? 'rgba(0,180,216,1)' : 'rgba(0,180,216,0.4)'
-    );
-    barChartInstance.update();
-  }
-});
+        const dataset = barChartInstance.data.datasets[0] as any;
+        dataset.backgroundColor = dias7.map((_, i) =>
+          i === index ? 'rgba(0,180,216,1)' : 'rgba(0,180,216,0.4)'
+        );
+        barChartInstance.update();
+      }
+    });
 
     const statusCounts = this.lotesRecentes().reduce((acc, l) => {
       acc[l.status] = (acc[l.status] || 0) + 1;

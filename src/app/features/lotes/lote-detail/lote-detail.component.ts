@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LoteApiService, LoteApi } from '../../../core/services/lote-api.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 interface LoteDetailView {
   id: string;
@@ -39,6 +40,7 @@ interface LoteDetailView {
     resultado: string;
     qtdReprovada: number;
     desvio?: string | null;
+    observacoes?: string | null;
     dataInspecao: Date;
     inspetor?: {
       id: string;
@@ -82,31 +84,36 @@ export class LoteDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private loteApi = inject(LoteApiService);
+  private auth = inject(AuthService);
 
   loading = signal(true);
   encerrarLoading = signal(false);
+  reinspcaoLoading = signal(false);
   error = signal<string | null>(null);
   lote = signal<LoteDetailView | null>(null);
+  encerrado = signal(false);
+
+  get perfil() { return this.auth.perfil(); }
+  get isOperador() { return this.perfil === 'operador' || this.perfil === 'gestor'; }
+  get isInspetor() { return this.perfil === 'inspetor' || this.perfil === 'gestor'; }
 
   resultadoCss(r: string): string {
-  const map: Record<string, string> = {
-    aprovado: 'badge-aprovado',
-    aprovado_com_restricao: 'badge-aprovado-com-restricao',
-    aprovado_restricao: 'badge-aprovado-com-restricao',
-    reprovado: 'badge-reprovado',
-  };
-  return map[r] ?? 'badge';
-}
+    const map: Record<string, string> = {
+      aprovado: 'badge-aprovado',
+      aprovado_com_restricao: 'badge-aprovado-com-restricao',
+      aprovado_restricao: 'badge-aprovado-com-restricao',
+      reprovado: 'badge-reprovado',
+    };
+    return map[r] ?? 'badge';
+  }
 
   async ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
-
     if (!id) {
       this.error.set('ID do lote não informado.');
       this.loading.set(false);
       return;
     }
-
     await this.loadLote(id);
   }
 
@@ -114,13 +121,10 @@ export class LoteDetailComponent implements OnInit {
     try {
       this.loading.set(true);
       this.error.set(null);
-
       const response = await this.loteApi.getById(id);
       this.lote.set(this.mapLote(response));
     } catch (error: any) {
-      this.error.set(
-        error?.error?.message ?? 'Não foi possível carregar o lote.'
-      );
+      this.error.set(error?.error?.message ?? 'Não foi possível carregar o lote.');
     } finally {
       this.loading.set(false);
     }
@@ -128,24 +132,31 @@ export class LoteDetailComponent implements OnInit {
 
   async encerrarLote() {
     const current = this.lote();
-
-    if (!current) return;
-    if (current.status !== 'em_producao') return;
-
+    if (!current || current.status !== 'em_producao') return;
     try {
       this.encerrarLoading.set(true);
-      const updated = await this.loteApi.updateStatus(
-        current.id,
-        'aguardando_inspecao'
-      );
-
-      this.lote.set(this.mapLote(updated));
+      await this.loteApi.updateStatus(current.id, 'aguardando_inspecao');
+      this.encerrado.set(true);
+      setTimeout(() => this.router.navigate(['/app/lotes']), 2500);
     } catch (error: any) {
-      this.error.set(
-        error?.error?.message ?? 'Não foi possível encerrar o lote.'
-      );
+      this.error.set(error?.error?.message ?? 'Não foi possível encerrar o lote.');
     } finally {
       this.encerrarLoading.set(false);
+    }
+  }
+
+  async solicitarReinspcao() {
+    const current = this.lote();
+    if (!current) return;
+    try {
+      this.reinspcaoLoading.set(true);
+      this.error.set(null);
+      await this.loteApi.updateStatus(current.id, 'aguardando_inspecao');
+      await this.loadLote(current.id);
+    } catch (error: any) {
+      this.error.set(error?.error?.message ?? 'Não foi possível solicitar reinspeção.');
+    } finally {
+      this.reinspcaoLoading.set(false);
     }
   }
 
@@ -162,21 +173,17 @@ export class LoteDetailComponent implements OnInit {
       observacoes: lote.observacoes ?? null,
       createdAt: lote.abertoEm ? new Date(lote.abertoEm) : null,
       encerradoEm: lote.encerradoEm ? new Date(lote.encerradoEm) : null,
-      produto: lote.produto
-        ? {
-            id: String(lote.produto.id),
-            nome: lote.produto.nome,
-            codigo: lote.produto.codigo,
-            unidade: 'unid.',
-          }
-        : undefined,
-      operador: lote.operador
-        ? {
-            id: String(lote.operador.id),
-            nome: lote.operador.nome,
-            email: lote.operador.email,
-          }
-        : undefined,
+      produto: lote.produto ? {
+        id: String(lote.produto.id),
+        nome: lote.produto.nome,
+        codigo: lote.produto.codigo,
+        unidade: 'unid.',
+      } : undefined,
+      operador: lote.operador ? {
+        id: String(lote.operador.id),
+        nome: lote.operador.nome,
+        email: lote.operador.email,
+      } : undefined,
       insumos: (lote.insumos ?? []).map((ins) => ({
         id: String(ins.id),
         nome: ins.nomeInsumo,
@@ -185,34 +192,23 @@ export class LoteDetailComponent implements OnInit {
         quantidade: ins.quantidade,
         unidade: ins.unidade,
       })),
-      inspecao: lote.inspecao
-        ? {
-            id: String(lote.inspecao.id),
-            resultado: lote.inspecao.resultado,
-            qtdReprovada: lote.inspecao.quantidadeRepr,
-            desvio: lote.inspecao.descricaoDesvio ?? null,
-            dataInspecao: new Date(lote.inspecao.inspecionadoEm),
-            inspetor: lote.inspecao.inspetor
-              ? {
-                  id: String(lote.inspecao.inspetor.id),
-                  nome: lote.inspecao.inspetor.nome,
-                  email: lote.inspecao.inspetor.email,
-                }
-              : null,
-          }
-        : null,
+      inspecao: lote.inspecao ? {
+        id: String(lote.inspecao.id),
+        resultado: lote.inspecao.resultado,
+        qtdReprovada: lote.inspecao.quantidadeRepr,
+        desvio: lote.inspecao.descricaoDesvio ?? null,
+        observacoes: null,
+        dataInspecao: new Date(lote.inspecao.inspecionadoEm),
+        inspetor: lote.inspecao.inspetor ? {
+          id: String(lote.inspecao.inspetor.id),
+          nome: lote.inspecao.inspetor.nome,
+          email: lote.inspecao.inspetor.email,
+        } : null,
+      } : null,
     };
   }
 
-  getStatusLabel(status: string) {
-    return STATUS_LABELS_LOCAL[status] ?? status;
-  }
-
-  getStatusCss(status: string) {
-    return STATUS_CSS_LOCAL[status] ?? 'badge';
-  }
-
-  turnoLabel(turno: string) {
-    return TURNO_LABELS_LOCAL[turno] ?? turno;
-  }
+  getStatusLabel(status: string) { return STATUS_LABELS_LOCAL[status] ?? status; }
+  getStatusCss(status: string) { return STATUS_CSS_LOCAL[status] ?? 'badge'; }
+  turnoLabel(turno: string) { return TURNO_LABELS_LOCAL[turno] ?? turno; }
 }
