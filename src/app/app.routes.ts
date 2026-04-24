@@ -43,7 +43,15 @@ export const routes: Routes = [
           import('./features/rastreabilidade/rastreabilidade.component').then(m => m.RastreabilidadeComponent),
       },
 
-      // Listagem de lotes
+      // Configurações - apenas gestor
+      {
+        path: 'configuracoes/usuarios',
+        canActivate: [gestorGuard],
+        loadComponent: () =>
+          import('./features/usuarios/usuarios.component').then(m => m.UsuariosComponent),
+      },
+
+      // Listagem de lotes - todos os perfis
       {
         path: 'lotes',
         canActivate: [lotesGuard],
@@ -51,24 +59,26 @@ export const routes: Routes = [
           import('./features/lotes/lote-list/lote-list.component').then(m => m.LoteListComponent),
       },
 
-      // rotas específicas ANTES de lotes/:id
+      // Novo lote - operador e gestor
       {
         path: 'lotes/novo',
-        canActivate: [operadorGuard],
+        canActivate: [lotesGuard],
         loadComponent: () =>
           import('./features/lotes/lote-form/lote-form.component').then(m => m.LoteFormComponent),
       },
 
-      // Rotas com :id/subrotas ANTES de lotes/:id
+      // Insumos - operador e gestor
       {
         path: 'lotes/:id/insumos',
-        canActivate: [operadorGuard],
+        canActivate: [lotesGuard],
         loadComponent: () =>
           import('./features/insumos/insumos.component').then(m => m.InsumosComponent),
       },
+
+      // Inspeção - inspetor e gestor
       {
         path: 'lotes/:id/inspecao',
-        canActivate: [inspetorGuard],
+        canActivate: [lotesGuard],
         loadComponent: () =>
           import('./features/inspecao/inspecao.component').then(m => m.InspecaoComponent),
       },
@@ -81,10 +91,10 @@ export const routes: Routes = [
           import('./features/lotes/lote-detail/lote-detail.component').then(m => m.LoteDetailComponent),
       },
 
-      // Produtos
+      // Produtos - operador e gestor
       {
         path: 'produtos',
-        canActivate: [operadorGuard],
+        canActivate: [lotesGuard],
         loadComponent: () =>
           import('./features/produtos/produtos.component').then(m => m.ProdutosComponent),
       },

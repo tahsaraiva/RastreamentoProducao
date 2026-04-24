@@ -179,9 +179,11 @@ export class LayoutComponent {
     switch (perfil) {
       case 'gestor':
         return [
-          { label: 'Dashboard',       route: '/app/dashboard',       icon: '📊' },
-          { label: 'Lotes',           route: '/app/lotes',           icon: '📦' },
-          { label: 'Rastreabilidade', route: '/app/rastreabilidade', icon: '🔍' },
+          { label: 'Dashboard',       route: '/app/dashboard',                icon: '📊' },
+          { label: 'Lotes',           route: '/app/lotes',                    icon: '📦' },
+          { label: 'Produtos',        route: '/app/produtos',                 icon: '🏭' },
+          { label: 'Rastreabilidade', route: '/app/rastreabilidade',          icon: '🔍' },
+          { label: 'Usuários',        route: '/app/configuracoes/usuarios',   icon: '👥' },
         ];
       case 'operador':
         return [

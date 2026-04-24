@@ -6,12 +6,14 @@
       <h1 class="text-2xl font-bold text-text-primary">Lotes de Produção</h1>
       <p class="text-sm text-text-muted mt-1">{{ filtered().length }} lote(s) encontrado(s)</p>
     </div>
-    <a routerLink="/app/lotes/novo" class="btn-primary px-5 py-2">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-      </svg>
-      Abrir novo lote
-    </a>
+    @if (!isInspetor) {
+      <a routerLink="/app/lotes/novo" class="btn-primary px-5 py-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Abrir novo lote
+      </a>
+    }
   </div>
 
   <!-- Loading -->
@@ -138,7 +140,7 @@
 
                 <td class="text-right">
                   <div class="flex items-center justify-end gap-2 pr-2">
-                    @if (lote.status === 'em_producao') {
+                    @if (lote.status === 'em_producao' && !isInspetor) {
                       <a [routerLink]="['/app/lotes', lote.id, 'insumos']"
                          class="text-xs font-medium px-2 py-1 rounded transition-all"
                          style="color:#00B4D8;"
@@ -148,7 +150,7 @@
                       </a>
                     }
 
-                    @if (lote.status === 'aguardando_inspecao') {
+                    @if (lote.status === 'aguardando_inspecao' && isInspetor) {
                       <a [routerLink]="['/app/lotes', lote.id, 'inspecao']"
                          class="text-xs font-medium px-2 py-1 rounded transition-all"
                          style="color:#FFD54F;"

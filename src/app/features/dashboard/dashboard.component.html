@@ -1,4 +1,5 @@
 <section class="space-y-6 animate-slide-up">
+
   <div class="flex items-center justify-between flex-wrap gap-4">
     <div>
       <h1 class="text-2xl font-bold text-text-primary">Dashboard de Produção</h1>
@@ -17,8 +18,9 @@
     </div>
   }
 
-  <!-- Metric cards -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+  <!-- Linha 1: indicadores do dia -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
     <div class="stat-card">
       <div class="flex justify-between items-start">
         <p class="text-text-muted text-sm">Lotes Hoje</p>
@@ -47,23 +49,6 @@
 
     <div class="stat-card">
       <div class="flex justify-between items-start">
-        <p class="text-text-muted text-sm">Taxa Aprovação</p>
-        <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background:rgba(26,95,122,0.2);">
-          <svg class="w-5 h-5" style="color:#2D8FAD" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-        </div>
-      </div>
-      <p class="text-3xl font-bold text-text-primary">{{ metrics().taxaAprovacao }}%</p>
-      <div class="w-full rounded-full h-1.5 mt-1" style="background:#334155;">
-        <div class="h-1.5 rounded-full transition-all duration-700"
-             style="background:linear-gradient(135deg,#00B4D8,#1A5F7A);"
-             [style.width.%]="metrics().taxaAprovacao"></div>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="flex justify-between items-start">
         <p class="text-text-muted text-sm">Aguardando Inspeção</p>
         <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background:rgba(245,124,0,0.2);">
           <svg class="w-5 h-5" style="color:#F57C00" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,20 +59,45 @@
       <p class="text-3xl font-bold text-text-primary">{{ metrics().aguardandoInspecao }}</p>
       <a routerLink="/app/lotes" class="text-xs" style="color:#00B4D8;">Ver pendentes →</a>
     </div>
+
   </div>
 
-  <!-- Charts row -->
+  <!-- Linha 2: totais por status -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+
+    <div class="stat-card">
+      <p class="text-text-muted text-xs mb-1">Total de Lotes</p>
+      <p class="text-2xl font-bold text-text-primary">{{ metrics().totalLotes }}</p>
+      <p class="text-xs text-text-muted">no sistema</p>
+    </div>
+
+    <div class="stat-card">
+      <p class="text-text-muted text-xs mb-1">Em Produção</p>
+      <p class="text-2xl font-bold" style="color:#00B4D8;">{{ metrics().emProducao }}</p>
+      <p class="text-xs text-text-muted">lotes ativos</p>
+    </div>
+
+    <div class="stat-card">
+      <p class="text-text-muted text-xs mb-1">Aprovados</p>
+      <p class="text-2xl font-bold" style="color:#66BB6A;">{{ metrics().aprovados }}</p>
+      <p class="text-xs text-text-muted">aprovação total</p>
+    </div>
+
+    <div class="stat-card">
+      <p class="text-text-muted text-xs mb-1">Reprovados</p>
+      <p class="text-2xl font-bold" style="color:#EF9A9A;">{{ metrics().reprovados }}</p>
+      <p class="text-xs text-text-muted">lotes reprovados</p>
+    </div>
+
+  </div>
+
+  <!-- Linha 3: gráficos -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
     <div class="glass-card rounded-2xl p-5">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="font-semibold text-text-primary flex items-center gap-2">
-          <svg class="w-5 h-5" style="color:#00B4D8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-          </svg>
-          Lotes por Dia
-        </h2>
-        <span class="text-xs text-text-muted">Clique em um dia para ver os lotes</span>
+        <h2 class="font-semibold text-text-primary">📊 Lotes por Dia</h2>
+        <span class="text-xs text-text-muted">Clique para ver os lotes</span>
       </div>
       <div style="position:relative; height:260px; cursor:pointer;">
         <canvas #barChart></canvas>
@@ -96,19 +106,14 @@
 
     <div class="glass-card rounded-2xl p-5">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="font-semibold text-text-primary flex items-center gap-2">
-          <svg class="w-5 h-5" style="color:#00B4D8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/>
-          </svg>
-          Status dos Lotes
-        </h2>
+        <h2 class="font-semibold text-text-primary">🍩 Status dos Lotes</h2>
         <span class="text-xs text-text-muted">Distribuição atual</span>
       </div>
       <div style="position:relative; height:260px;">
         <canvas #doughnutChart></canvas>
       </div>
     </div>
+
   </div>
 
   <!-- Lotes do dia selecionado -->
@@ -116,8 +121,7 @@
     <div class="glass-card rounded-2xl overflow-hidden animate-fade-in">
       <div class="flex items-center justify-between p-5 border-b border-dark-border">
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-full flex items-center justify-center"
-               style="background:rgba(0,180,216,0.2);">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background:rgba(0,180,216,0.2);">
             <svg class="w-4 h-4" style="color:#00B4D8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -128,27 +132,15 @@
             <p class="text-xs text-text-muted">{{ lotesDoDia().length }} lote(s) encontrado(s)</p>
           </div>
         </div>
-        <button (click)="limparDiaSelecionado()" class="btn-secondary text-xs px-3 py-1.5">
-          ✕ Fechar
-        </button>
+        <button (click)="limparDiaSelecionado()" class="btn-secondary text-xs px-3 py-1.5">✕ Fechar</button>
       </div>
-
       @if (lotesDoDia().length === 0) {
-        <div class="p-8 text-center text-text-muted text-sm">
-          Nenhum lote registrado neste dia.
-        </div>
+        <div class="p-8 text-center text-text-muted text-sm">Nenhum lote registrado neste dia.</div>
       } @else {
         <div class="overflow-x-auto">
           <table class="table-base">
             <thead>
-              <tr>
-                <th>Nº do Lote</th>
-                <th>Produto</th>
-                <th>Operador</th>
-                <th>Data</th>
-                <th>Status</th>
-                <th></th>
-              </tr>
+              <tr><th>Nº do Lote</th><th>Produto</th><th>Operador</th><th>Data</th><th>Status</th><th></th></tr>
             </thead>
             <tbody>
               @for (lote of lotesDoDia(); track lote.id) {
@@ -160,16 +152,8 @@
                   </td>
                   <td class="text-sm text-text-secondary">{{ lote.operador }}</td>
                   <td class="text-sm text-text-muted">{{ lote.dataProd | date:'dd/MM/yyyy' }}</td>
-                  <td>
-                    <span class="badge" [ngClass]="getStatusCss(lote.status)">
-                      {{ getStatusLabel(lote.status) }}
-                    </span>
-                  </td>
-                  <td>
-                    <a [routerLink]="['/app/lotes', lote.id]" class="text-xs" style="color:#00B4D8;">
-                      Ver →
-                    </a>
-                  </td>
+                  <td><span class="badge" [ngClass]="getStatusCss(lote.status)">{{ getStatusLabel(lote.status) }}</span></td>
+                  <td><a [routerLink]="['/app/lotes', lote.id]" class="text-xs" style="color:#00B4D8;">Ver →</a></td>
                 </tr>
               }
             </tbody>
@@ -179,24 +163,7 @@
     </div>
   }
 
-  <!-- Line chart -->
-  <div class="glass-card rounded-2xl p-5">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="font-semibold text-text-primary flex items-center gap-2">
-        <svg class="w-5 h-5" style="color:#00B4D8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
-        </svg>
-        Evolução da Taxa de Aprovação
-      </h2>
-      <span class="text-xs text-text-muted">Últimos 6 meses</span>
-    </div>
-    <div style="position:relative; height:260px;">
-      <canvas #lineChart></canvas>
-    </div>
-  </div>
-
-  <!-- Recent lots -->
+  <!-- Últimos lotes -->
   <div class="glass-card rounded-2xl overflow-hidden">
     <div class="flex items-center justify-between p-5 border-b border-dark-border">
       <h2 class="font-semibold text-text-primary">📋 Últimos Lotes Registrados</h2>
@@ -205,13 +172,7 @@
     <div class="overflow-x-auto">
       <table class="table-base">
         <thead>
-          <tr>
-            <th>Nº do Lote</th>
-            <th>Produto</th>
-            <th>Operador</th>
-            <th>Data</th>
-            <th>Status</th>
-          </tr>
+          <tr><th>Nº do Lote</th><th>Produto</th><th>Operador</th><th>Data</th><th>Status</th></tr>
         </thead>
         <tbody>
           @for (lote of lotesRecentes(); track lote.id) {
@@ -223,15 +184,12 @@
               </td>
               <td class="text-sm text-text-secondary">{{ lote.operador }}</td>
               <td class="text-sm text-text-muted">{{ lote.dataProd | date:'dd/MM/yyyy' }}</td>
-              <td>
-                <span class="badge" [ngClass]="getStatusCss(lote.status)">
-                  {{ getStatusLabel(lote.status) }}
-                </span>
-              </td>
+              <td><span class="badge" [ngClass]="getStatusCss(lote.status)">{{ getStatusLabel(lote.status) }}</span></td>
             </tr>
           }
         </tbody>
       </table>
     </div>
   </div>
+
 </section>

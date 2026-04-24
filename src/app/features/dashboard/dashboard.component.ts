@@ -9,22 +9,21 @@ Chart.register(...registerables);
 interface DashboardMetricsView {
   lotesHoje: number;
   unidadesHoje: number;
-  taxaAprovacao: number;
   aguardandoInspecao: number;
+  totalLotes: number;
+  emProducao: number;
+  aprovados: number;
+  aprovadosRestricao: number;
+  reprovados: number;
 }
 
 interface LoteView {
   id: string;
   numero: string;
   dataProd: Date;
-  abertoEm: Date;
   status: string;
   operador: string;
-  produto: {
-    id: string;
-    nome: string;
-    codigo: string;
-  };
+  produto: { id: string; nome: string; codigo: string };
 }
 
 @Component({
@@ -38,7 +37,6 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   @ViewChild('barChart')      barChartRef!:      ElementRef<HTMLCanvasElement>;
   @ViewChild('doughnutChart') doughnutChartRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('lineChart')     lineChartRef!:     ElementRef<HTMLCanvasElement>;
 
   now = new Date();
   loading = signal(true);
@@ -47,8 +45,12 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   metrics = signal<DashboardMetricsView>({
     lotesHoje: 0,
     unidadesHoje: 0,
-    taxaAprovacao: 0,
     aguardandoInspecao: 0,
+    totalLotes: 0,
+    emProducao: 0,
+    aprovados: 0,
+    aprovadosRestricao: 0,
+    reprovados: 0,
   });
 
   lotesRecentes = signal<LoteView[]>([]);
@@ -61,12 +63,17 @@ export class DashboardComponent implements OnInit, AfterViewInit {
       this.error.set(null);
 
       const response = await this.dashboardApi.getDashboard();
+      const ind = response.indicadores;
 
       this.metrics.set({
-        lotesHoje: response.indicadores.lotesProduzidosHoje,
-        unidadesHoje: response.indicadores.unidadesProduzidasHoje,
-        taxaAprovacao: response.indicadores.taxaAprovacaoMes,
-        aguardandoInspecao: response.indicadores.lotesAguardandoInspecao,
+        lotesHoje: ind.lotesProduzidosHoje,
+        unidadesHoje: ind.unidadesProduzidasHoje,
+        aguardandoInspecao: ind.lotesAguardandoInspecao,
+        totalLotes: ind.totalLotes ?? 0,
+        emProducao: ind.emProducao ?? 0,
+        aprovados: ind.aprovados ?? 0,
+        aprovadosRestricao: ind.aprovadosRestricao ?? 0,
+        reprovados: ind.reprovados ?? 0,
       });
 
       this.lotesRecentes.set(
@@ -74,7 +81,6 @@ export class DashboardComponent implements OnInit, AfterViewInit {
           id: String(lote.id),
           numero: lote.numeroLote,
           dataProd: this.parseDateLocal(lote.dataProducao),
-          abertoEm: this.parseDateLocal(lote.dataProducao),
           status: lote.status,
           operador: lote.operador.nome,
           produto: {
@@ -85,9 +91,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         }))
       );
     } catch (error: any) {
-      this.error.set(
-        error?.error?.message ?? 'Não foi possível carregar o dashboard.'
-      );
+      this.error.set(error?.error?.message ?? 'Não foi possível carregar o dashboard.');
     } finally {
       this.loading.set(false);
     }
@@ -110,10 +114,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
       const dd = String(d.getDate()).padStart(2, '0');
       const mm = String(d.getMonth() + 1).padStart(2, '0');
       const diaSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][d.getDay()];
-      dias.push({
-        label: `${diaSemana} ${dd}/${mm}`,
-        dateStr: d.toDateString(),
-      });
+      dias.push({ label: `${diaSemana} ${dd}/${mm}`, dateStr: d.toDateString() });
     }
     return dias;
   }
@@ -125,17 +126,6 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     );
   }
 
-  private getUltimos6Meses(): string[] {
-    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    const labels: string[] = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date();
-      d.setMonth(d.getMonth() - i);
-      labels.push(`${meses[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`);
-    }
-    return labels;
-  }
-
   selecionarDia(label: string, dateStr: string) {
     if (this.diaSelecionado() === label) {
       this.diaSelecionado.set(null);
@@ -143,10 +133,9 @@ export class DashboardComponent implements OnInit, AfterViewInit {
       return;
     }
     this.diaSelecionado.set(label);
-    const lotesFiltrados = this.lotesRecentes().filter(
-      l => l.dataProd.toDateString() === dateStr
+    this.lotesDoDia.set(
+      this.lotesRecentes().filter(l => l.dataProd.toDateString() === dateStr)
     );
-    this.lotesDoDia.set(lotesFiltrados);
   }
 
   limparDiaSelecionado() {
@@ -178,36 +167,21 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         maintainAspectRatio: false,
         plugins: {
           legend: { labels: { color: legendColor } },
-          tooltip: {
-            callbacks: {
-              footer: () => ['Clique para ver os lotes'],
-            }
-          }
+          tooltip: { callbacks: { footer: () => ['Clique para ver os lotes'] } },
         },
         scales: {
-          y: {
-            grid: { color: gridColor },
-            ticks: { color: tickColor, stepSize: 1 },
-            beginAtZero: true,
-          },
+          y: { grid: { color: gridColor }, ticks: { color: tickColor, stepSize: 1 }, beginAtZero: true },
           x: { ticks: { color: tickColor } },
         },
       },
     });
 
     this.barChartRef.nativeElement.addEventListener('click', (event: MouseEvent) => {
-      const points = barChartInstance.getElementsAtEventForMode(
-        event,
-        'nearest',
-        { intersect: true },
-        false
-      );
-
+      const points = barChartInstance.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
       if (points.length > 0) {
         const index = points[0].index;
         const dia = dias7[index];
         this.selecionarDia(dia.label, dia.dateStr);
-
         const dataset = barChartInstance.data.datasets[0] as any;
         dataset.backgroundColor = dias7.map((_, i) =>
           i === index ? 'rgba(0,180,216,1)' : 'rgba(0,180,216,0.4)'
@@ -216,22 +190,18 @@ export class DashboardComponent implements OnInit, AfterViewInit {
       }
     });
 
-    const statusCounts = this.lotesRecentes().reduce((acc, l) => {
-      acc[l.status] = (acc[l.status] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
+    const m = this.metrics();
     new Chart(this.doughnutChartRef.nativeElement, {
       type: 'doughnut',
       data: {
         labels: ['Aprovados', 'Aguardando', 'Em Produção', 'Restrição', 'Reprovados'],
         datasets: [{
           data: [
-            statusCounts['aprovado'] || 0,
-            statusCounts['aguardando_inspecao'] || 0,
-            statusCounts['em_producao'] || 0,
-            statusCounts['aprovado_com_restricao'] || statusCounts['aprovado_restricao'] || 0,
-            statusCounts['reprovado'] || 0,
+            m.aprovados,
+            m.aguardandoInspecao,
+            m.emProducao,
+            m.aprovadosRestricao,
+            m.reprovados,
           ],
           backgroundColor: ['#2E7D32', '#F9A825', '#00B4D8', '#FB8C00', '#C62828'],
           borderWidth: 0,
@@ -241,37 +211,6 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         responsive: true,
         maintainAspectRatio: false,
         plugins: { legend: { position: 'bottom', labels: { color: legendColor } } },
-      },
-    });
-
-    new Chart(this.lineChartRef.nativeElement, {
-      type: 'line',
-      data: {
-        labels: this.getUltimos6Meses(),
-        datasets: [{
-          label: 'Taxa de Aprovação (%)',
-          data: [88, 91, 92, 93, 94, Math.round(this.metrics().taxaAprovacao)],
-          borderColor: '#00B4D8',
-          backgroundColor: 'rgba(0,180,216,0.1)',
-          fill: true,
-          tension: 0.4,
-          pointBackgroundColor: '#00B4D8',
-          pointBorderColor: '#1A5F7A',
-          pointRadius: 5,
-        }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { labels: { color: legendColor } } },
-        scales: {
-          y: {
-            min: 80, max: 100,
-            grid: { color: gridColor },
-            ticks: { color: tickColor, callback: (v) => v + '%' },
-          },
-          x: { ticks: { color: tickColor } },
-        },
       },
     });
   }
